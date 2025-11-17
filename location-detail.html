@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Details - Queer Domesticity and Erasure: London Spaces</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+     
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+    <!-- Custom Fonts (Using Helvetica Neue Light now) -->
+    <style>
+        @font-face {
+            font-family: 'Helvetica Neue Light';
+            src: local('Helvetica Neue Light'),
+                 local('HelveticaNeue-Light'),
+                 local('Helvetica Neue');
+            font-weight: 300;
+            font-style: normal;
+        }
+    </style>
+
+    <style>
+        /* AESTHETIC UPDATE: Muted Tones (Beige/Cream) + Minimalist Layout */
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Helvetica Neue Light', 'Helvetica Neue', 'Helvetica'],
+                    },
+                    colors: {
+                        /* New Palette (Muted Tones) */
+                        'background': '#FBFBF8',    /* Very light, warm cream */
+                        'surface': '#FFFFFF',      /* White for cards */
+                        'primary': '#B0A9A1',       /* Primary muted beige */
+                        'secondary': '#8A837D',     /* Darker beige/grey */
+                        'accent-dark': '#5E5B57',    /* Dark grey-brown */
+                        'text-primary': '#2E2E2E',    /* Soft dark black */
+                        'text-secondary': '#757575',   /* Medium grey */
+                        'text-on-color': '#FFFFFF',    /* White */
+                        
+                        /* New Era Colors (Muted Tones) */
+                        'era-1700s': '#5E5B57',       /* Darkest grey-brown */
+                        'era-early-20th': '#8A837D', /* Mid-dark grey-brown */
+                        'era-mid-century': '#B0A9A1',  /* Mid grey-beige */
+                        'era-late-20th': '#CFC9C1',    /* Light grey-beige */
+                        'era-21st-century': '#E5E1DA', /* Lightest beige */
+                    },
+                },
+            },
+        };
+
+        /* Custom styles for the map and application */
+        body {
+            /* AESTHETIC UPDATE: Switched to Helvetica Neue Light font, new bg color */
+            font-family: 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica';
+            color: tailwind.theme.colors['text-primary'];
+            background-color: tailwind.theme.colors.background;
+            font-weight: 300;
+        }
+        
+        /* AESTHETIC UPDATE: Removed content-panel. Panels are now simple */
+        .content-panel {
+            background-color: tailwind.theme.colors.surface;
+            border: 1px solid #EAEAEA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            /* AESTHETIC UPDATE: Switched to Helvetica Neue Light font */
+            font-family: 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica';
+            font-weight: 300;
+        }
+
+        p, span, div, a, li {
+            font-family: 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica';
+            font-weight: 300;
+        }
+
+        /* Set a specific height for the map container */
+        #map-diagram {
+            height: 400px;
+            width: 100%;
+            background-color: #f0f0f0; /* Placeholder bg */
+            border: 1px solid #EAEAEA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            /* AESTHETIC UPDATE: Tint the map tiles to match the new theme */
+            filter: grayscale(40%) sepia(20%) opacity(90%);
+        }
+
+        /* Scattered poster layout styles */
+        .poster-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .floating-image {
+            position: relative;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .floating-image:hover {
+            transform: scale(1.02);
+        }
+
+        .floating-image-left {
+            float: left;
+            margin-right: 2rem;
+            margin-bottom: 1rem;
+            max-width: 300px;
+        }
+
+        .floating-image-right {
+            float: right;
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+            max-width: 300px;
+        }
+
+        .text-content {
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .section-break {
+            height: 3rem;
+        }
+
+        .era-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            color: white;
+            font-weight: 300;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background-color: #f0f0f0;
+            color: #2E2E2E;
+            font-weight: 300;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        /* Clear floats for proper layout */
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .floating-image-left,
+            .floating-image-right {
+                float: none;
+                margin: 1rem 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-gray-200 z-50 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <a href="queer-canvas.html" class="text-accent-dark hover:text-secondary flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Map
+            </a>
+            <h1 class="text-xl font-light">Queer London History</h1>
+            <div></div>
+        </div>
+    </nav>
+
+    <!-- Main Content - Scattered Poster Layout -->
+    <main class="pt-20 pb-12">
+        <div class="poster-container">
+            
+            <!-- Title Section -->
+            <header class="text-center mb-8">
+                <h1 id="location-title" class="text-4xl md:text-5xl font-light text-text-primary mb-4"></h1>
+                <p id="location-address" class="text-lg text-text-secondary font-light"></p>
+                
+                <!-- Badges -->
+                <div class="flex flex-wrap justify-center mt-6">
+                    <span id="location-era" class="era-badge"></span>
+                    <span id="location-type" class="type-badge"></span>
+                </div>
+            </header>
+
+            <!-- Main Description -->
+            <section class="text-content mb-12">
+                <p id="location-description" class="text-lg leading-relaxed"></p>
+            </section>
+
+            <!-- Scattered Content Layout -->
+            <div class="space-y-8">
+                
+                <!-- Historical Context Section -->
+                <section class="clearfix">
+                    <h2 class="text-3xl font-light text-text-primary mb-6">Historical Context</h2>
+                    
+                    <!-- Floating image on left -->
+                    <img id="context-image-1" class="floating-image floating-image-left" src="" alt="">
+                    
+                    <div class="text-content">
+                        <p class="mb-4">This location represents an important part of London's queer history. During this period, queer spaces often had to exist in hidden or temporary forms, creating networks of community and resistance that shaped the city's social landscape.</p>
+                        
+                        <p class="mb-4">The social and political climate of the time meant that queer individuals had to be creative in finding spaces where they could express their identities and form relationships. These locations, whether private homes, temporary gathering spots, or commercial establishments, became vital sanctuaries.</p>
+                    </div>
+                </section>
+
+                <div class="section-break"></div>
+
+                <!-- Significance Section -->
+                <section class="clearfix">
+                    <h2 class="text-3xl font-light text-text-primary mb-6">Significance</h2>
+                    
+                    <!-- Floating image on right -->
+                    <img id="significance-image" class="floating-image floating-image-right" src="" alt="">
+                    
+                    <div class="text-content">
+                        <p class="mb-4">Places like this served as vital sanctuaries for queer people to express their identities, form relationships, and build communities in the face of social and legal persecution. They represent both the resilience and the creativity of queer life throughout history.</p>
+                        
+                        <p class="mb-4">The significance of such spaces extends beyond their physical function. They were sites of cultural production, political organizing, and the development of queer identities and communities that would influence later generations.</p>
+                        
+                        <p class="mb-4">Many of these locations were deliberately hidden or operated in gray areas of the law, existing as "queer domesticity" - spaces where queer people could create temporary homes and families outside of heteronormative expectations.</p>
+                    </div>
+                </section>
+
+                <div class="section-break"></div>
+
+                <!-- Legacy Section -->
+                <section class="clearfix">
+                    <h2 class="text-3xl font-light text-text-primary mb-6">Legacy</h2>
+                    
+                    <!-- Floating image on left -->
+                    <img id="legacy-image" class="floating-image floating-image-left" src="" alt="">
+                    
+                    <div class="text-content">
+                        <p class="mb-4">The legacy of such spaces continues to influence contemporary queer culture and community building in London. Understanding these historical locations helps us appreciate the ongoing struggle for queer rights and recognition.</p>
+                        
+                        <p class="mb-4">Many of the strategies and community structures developed in these spaces - chosen families, informal networks, and the creation of safe spaces - continue to be important elements of queer community life today.</p>
+                        
+                        <p class="mb-4">While many of these physical locations have been lost to time, development, or changing social landscapes, their memory lives on in archives, oral histories, and the continuing presence of queer spaces throughout London.</p>
+                    </div>
+                </section>
+
+                <div class="section-break"></div>
+
+                <!-- Map Section -->
+                <section class="mb-12">
+                    <h2 class="text-3xl font-light text-text-primary mb-6">Location</h2>
+                    <div id="map-diagram" class="rounded-lg">
+                        <!-- Map will be injected here by JS -->
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a id="directions-link" href="#" target="_blank" class="text-primary hover:text-secondary inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Get Directions
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Application Code -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 1. DATA & STATE ---
+
+            // Color object for reliable JS access
+            const ERA_COLORS = {
+                'era-1700s': '#5E5B57',
+                'era-early-20th': '#8A837D',
+                'era-mid-century': '#B0A9A1',
+                'era-late-20th': '#CFC9C1',
+                'era-21st-century': '#E5E1DA',
+            };
+
+            let map;
+            let locationData = {};
+
+            // --- 2. INITIALIZATION ---
+
+            // Parse URL parameters
+            function getUrlParams() {
+                const params = new URLSearchParams(window.location.search);
+                return {
+                    id: params.get('id') || '',
+                    title: params.get('title') || '',
+                    era: params.get('era') || '',
+                    type: params.get('type') || '',
+                    address: params.get('address') || '',
+                    description: params.get('description') || '',
+                    imageUrl: params.get('imageUrl') || '',
+                    imageAlt: params.get('imageAlt') || '',
+                    coords: (params.get('coords') || '').split(',').map(Number)
+                };
+            }
+
+            // Initialize the page
+            function initializePage() {
+                locationData = getUrlParams();
+                
+                if (!locationData.id) {
+                    document.body.innerHTML = `
+                        <div class="min-h-screen flex items-center justify-center">
+                            <div class="text-center">
+                                <h1 class="text-2xl font-light text-red-600 mb-4">Location Not Found</h1>
+                                <p class="text-gray-600 mb-6">No location data was provided.</p>
+                                <a href="queer-canvas.html" class="text-primary hover:text-secondary">Back to Map</a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                populateLocationDetails();
+                initializeMap();
+                loadImages();
+            }
+
+            // --- 3. CORE FUNCTIONS ---
+
+            /**
+             * Populate the page with location details
+             */
+            function populateLocationDetails() {
+                // Set basic info
+                document.getElementById('location-title').textContent = locationData.title;
+                document.getElementById('location-address').textContent = locationData.address;
+                document.getElementById('location-description').textContent = locationData.description;
+                
+                // Set era and type badges
+                const eraElement = document.getElementById('location-era');
+                const typeElement = document.getElementById('location-type');
+                
+                eraElement.textContent = locationData.era;
+                eraElement.style.backgroundColor = ERA_COLORS[`era-${locationData.era.toLowerCase().replace(' ', '-').replace('-century', 's')}`] || '#333';
+                
+                typeElement.textContent = locationData.type;
+                
+                // Set directions link
+                if (locationData.coords.length === 2) {
+                    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${locationData.coords[0]},${locationData.coords[1]}`;
+                    document.getElementById('directions-link').href = directionsUrl;
+                }
+            }
+
+            /**
+             * Load images into the scattered layout
+             */
+            function loadImages() {
+                const images = [
+                    { id: 'context-image-1', text: 'Historical Context' },
+                    { id: 'significance-image', text: 'Cultural Significance' },
+                    { id: 'legacy-image', text: 'Historical Legacy' }
+                ];
+                
+                // If we have a real image, use it for the first image
+                if (locationData.imageUrl) {
+                    document.getElementById('context-image-1').src = locationData.imageUrl;
+                    document.getElementById('context-image-1').alt = locationData.imageAlt || locationData.title;
+                } else {
+                    // Use placeholder for all images
+                    images.forEach((img, index) => {
+                        const element = document.getElementById(img.id);
+                        element.src = `https://placehold.co/600x400/E5E1DA/5E5B57?text=${encodeURIComponent(img.text)}&font=inter`;
+                        element.alt = img.text;
+                    });
+                }
+                
+                // For the other images, use themed placeholders
+                if (locationData.imageUrl) {
+                    document.getElementById('significance-image').src = `https://placehold.co/600x400/CFC9C1/5E5B57?text=${encodeURIComponent('Cultural Significance')}&font=inter`;
+                    document.getElementById('significance-image').alt = 'Cultural Significance';
+                    
+                    document.getElementById('legacy-image').src = `https://placehold.co/600x400/B0A9A1/FFFFFF?text=${encodeURIComponent('Historical Legacy')}&font=inter`;
+                    document.getElementById('legacy-image').alt = 'Historical Legacy';
+                }
+            }
+
+            /**
+             * Initialize the map
+             */
+            function initializeMap() {
+                if (locationData.coords.length !== 2) return;
+
+                try {
+                    // Initialize Leaflet Map
+                    map = L.map('map-diagram').setView(locationData.coords, 16);
+
+                    // Use a minimal, light-colored map from CartoDB
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    }).addTo(map);
+
+                    // Add marker for this location
+                    const bgColor = ERA_COLORS[`era-${locationData.era.toLowerCase().replace(' ', '-').replace('-century', 's')}`] || '#333';
+                    const iconColor = locationData.era.includes('21st') || locationData.era.includes('Late') ? '#2E2E2E' : 'white';
+                    
+                    const iconMap = {
+                        'Private/Domestic Residence': '🏠',
+                        'Temporary Social Gathering': '⚡️',
+                        'Commercial Club': '🍸',
+                        'Shared & Co-operative Living': '🍲',
+                        'Communal Squats & Social Centers': '🏢',
+                        'Historical Association': '🏛️'
+                    };
+                    
+                    const customIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color: ${bgColor}; color: ${iconColor};" class="w-10 h-10 rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-white opacity-90">${iconMap[locationData.type] || '📍'}</div>`,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
+                    });
+
+                    L.marker(locationData.coords, { icon: customIcon }).addTo(map)
+                        .bindPopup(locationData.title)
+                        .openPopup();
+
+                } catch (error) {
+                    console.error("Map initialization failed:", error);
+                    document.getElementById('map-diagram').innerHTML = `
+                        <div class="h-full w-full flex items-center justify-center bg-red-100 text-red-700 p-4 rounded-lg">
+                            <strong>Error:</strong> Failed to load the map.
+                        </div>
+                    `;
+                }
+            }
+
+            // Initialize the page
+            initializePage();
+        });
+    </script>
+</body>
+</html>
