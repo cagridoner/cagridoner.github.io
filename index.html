@@ -1,665 +1,440 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Queer Domesticity and Erasure: London Spaces</title>
-    
+    <title>Queer Domesticity: Mirror Edition</title>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Leaflet.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-     
-    <!-- Leaflet.js JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
 
-    <!-- Custom Fonts (Using Helvetica Neue Light now) -->
-    <style>
-        @font-face {
-            font-family: 'Helvetica Neue Light';
-            src: local('Helvetica Neue Light'),
-                 local('HelveticaNeue-Light'),
-                 local('Helvetica Neue');
-            font-weight: 300;
-            font-style: normal;
-        }
-    </style>
-
-    <style>
-        /* AESTHETIC UPDATE: Muted Tones (Beige/Cream) + Minimalist Layout */
+    <!-- tailwind.config -->
+    <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Helvetica Neue Light', 'Helvetica Neue', 'Helvetica'],
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
                     },
                     colors: {
-                        /* New Palette (Muted Tones) */
-                        'background': '#FBFBF8',    /* Very light, warm cream */
-                        'surface': '#FFFFFF',      /* White for cards */
-                        'primary': '#B0A9A1',       /* Primary muted beige */
-                        'secondary': '#8A837D',     /* Darker beige/grey */
-                        'accent-dark': '#5E5B57',    /* Dark grey-brown */
-                        'text-primary': '#2E2E2E',    /* Soft dark black */
-                        'text-secondary': '#757575',   /* Medium grey */
-                        'text-on-color': '#FFFFFF',    /* White */
-                        
-                        /* New Era Colors (Muted Tones) */
-                        'era-1700s': '#5E5B57',       /* Darkest grey-brown */
-                        'era-early-20th': '#8A837D', /* Mid-dark grey-brown */
-                        'era-mid-century': '#B0A9A1',  /* Mid grey-beige */
-                        'era-late-20th': '#CFC9C1',    /* Light grey-beige */
-                        'era-21st-century': '#E5E1DA', /* Lightest beige */
+                        'mirror-dark': '#050505',
+                        'silver-plate': '#E8E8E8',
+                        'lipstick-red': '#D90429',
+                        'deep-red': '#600110',
                     },
+                    animation: {
+                        'pulse-red': 'pulseRed 2s infinite',
+                    },
+                    keyframes: {
+                        pulseRed: {
+                            '0%, 100%': { boxShadow: '0 0 0 0 rgba(217, 4, 41, 0.4)' },
+                            '70%': { boxShadow: '0 0 0 10px rgba(217, 4, 41, 0)' },
+                        }
+                    }
                 },
             },
         };
+    </script>
 
-        /* Custom styles for the map and application */
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* --- İMLEÇ AYARLARI --- */
+
+        /* 1. Gerçek mouse'u gizle */
+        body,
+        a,
+        button,
+        .location-card,
+        .leaflet-interactive {
+            cursor: none !important;
+        }
+
+        /* 2. Özel İmleç Div'i */
+        #custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            z-index: 10000;
+            pointer-events: none;
+            background-image: url('https://files.catbox.moe/u70y1m.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            /* HALO EFEKTİ */
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+            transition: transform 0.05s linear;
+            /* Daha hızlı tepki süresi */
+            transform: translate(-50%, -50%);
+        }
+
+        /* Tıklama efekti */
+        .clicking-cursor {
+            transform: translate(-50%, -50%) scale(0.8) !important;
+            filter: drop-shadow(0 0 10px #D90429) !important;
+        }
+
+        body.hovering #custom-cursor {
+            transform: translate(-50%, -50%) scale(1.3);
+            filter: drop-shadow(0 0 5px #D90429);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+            border: 1px solid #000;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D90429;
+        }
+
+        /* --- STİLLER --- */
         body {
-            /* AESTHETIC UPDATE: Switched to Helvetica Neue Light font, new bg color */
-            font-family: 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica';
-            color: tailwind.theme.colors['text-primary'];
-            background-color: tailwind.theme.colors.background;
-        }
-        
-        /* AESTHETIC UPDATE: Removed content-panel. Panels are now simple */
-        .content-panel {
-            background-color: tailwind.theme.colors.surface;
-            border: 1px solid #EAEAEA;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background-color: #050505;
+            color: #E8E8E8;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000000 100%);
+            overflow-x: hidden;
         }
 
-        h1, h2, h3 {
-            /* AESTHETIC UPDATE: Switched to Helvetica Neue Light font */
-            font-family: 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica';
-            font-weight: 300;
+        /* Ayna Panelleri */
+        .mirror-panel {
+            background: linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
         }
 
-        /* Set a specific height for the map container */
-        #map-diagram {
-            height: 500px; /* Slightly shorter */
-            width: 100%;
-            background-color: #f0f0f0; /* Placeholder bg */
-            border: 1px solid #EAEAEA;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            /* AESTHETIC UPDATE: Tint the map tiles to match the new theme */
-            filter: grayscale(40%) sepia(20%) opacity(90%);
-        }
-        
-        /* Legend overlay */
-        .leaflet-top.leaflet-right {
-            top: 10px;
-            right: 10px;
+        /* Kart Tasarımı */
+        .location-card {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Leaflet icon marker transitions */
-        .leaflet-marker-icon {
-            transition: all 0.3s ease;
+        .location-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: skewX(-25deg);
+            transition: 0.5s;
+            z-index: 20;
+            pointer-events: none;
         }
 
-        .leaflet-marker-icon:hover {
-            transform: scale(1.25);
-            z-index: 1000 !important;
+        .location-card:hover::before {
+            left: 150%;
+            transition: 0.7s;
         }
-        
-        .marker-highlighted {
-            transform: scale(1.5);
-            /* AESTHETIC UPDATE: Changed highlight color */
-            filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px #B0A9A1);
-            z-index: 999 !important;
+
+        .location-card:hover {
+            border-color: #D90429;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(217, 4, 41, 0.15);
+            background: rgba(30, 30, 30, 0.8);
         }
-        
+
+        .location-card img {
+            filter: grayscale(100%) contrast(110%) brightness(80%);
+            transition: all 0.5s ease;
+        }
+
+        .location-card:hover img {
+            filter: grayscale(0%) contrast(100%) brightness(100%);
+        }
+
         .card-highlighted {
-            /* AESTHETIC UPDATE: Changed highlight color */
-            outline: 3px solid tailwind.theme.colors['primary'];
-            box-shadow: 0 10px 20px rgba(176, 169, 161, 0.3);
-            transform: translateY(-2px);
+            border: 1px solid #D90429 !important;
+            box-shadow: 0 0 30px rgba(217, 4, 41, 0.4) !important;
+            transform: scale(1.02);
+            z-index: 50;
+        }
+
+        /* Harita */
+        #map-diagram {
+            height: 550px;
+            width: 100%;
+            background-color: #111;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            filter: grayscale(100%) contrast(110%) brightness(70%);
+            transition: all 0.5s ease;
+        }
+
+        #map-diagram:hover {
+            filter: grayscale(60%) contrast(100%) brightness(85%);
+        }
+
+        .marker-highlighted div {
+            background-color: #D90429 !important;
+            color: white !important;
+            transform: scale(1.3);
+            box-shadow: 0 0 20px #D90429 !important;
+            border-color: white !important;
+            z-index: 999;
         }
     </style>
+
+    <!-- Sound Effect -->
+    <audio id="Sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
+    </audio>
+
 </head>
-<body class="min-h-screen p-4 md:p-8">
 
-    <!-- Main Application Container -->
-    <div class="max-w-7xl mx-auto space-y-8">
+<body class="min-h-screen pb-24 selection:bg-lipstick-red selection:text-white">
 
-        <!-- Header Section -->
-        <header class="text-center p-6 rounded-lg bg-surface border border-gray-200 shadow-sm">
-            <!-- AESTHETIC UPDATE: Changed text color */ -->
-            <h1 class="text-4xl md:text-5xl font-bold text-accent-dark mb-2">Queer Domesticity & Erasure</h1>
-            <p class="text-lg text-text-secondary font-sans italic">Mapping Queer Life in London (1700s - Present)</p>
+    <!-- ÖZEL İMLEÇ DİV'İ -->
+    <div id="custom-cursor"></div>
+
+    <!-- İÇERİK -->
+    <div class="max-w-7xl mx-auto space-y-12 pt-12 px-6">
+        <header class="text-center py-8 relative">
+            <div
+                class="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-lipstick-red to-transparent opacity-50">
+            </div>
+            <h1
+                class="text-6xl md:text-8xl font-serif mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 drop-shadow-2xl">
+                Queer London</h1>
+            <h2 class="text-3xl md:text-4xl font-serif italic text-gray-400 mb-6">& The Politics of <span
+                    class="text-lipstick-red underline decoration-1 underline-offset-4">Erasure</span></h2>
+            <p
+                class="text-silver-plate text-xs md:text-sm tracking-[0.3em] font-bold uppercase border-t border-b border-white/10 py-4 inline-block">
+                Domesticity • Resistance • Archive</p>
         </header>
 
-        <!-- MAP / SPATIAL DIAGRAM SECTION -->
-        <section id="map-section" class="p-6 rounded-lg content-panel">
-            <!-- AESTHETIC UPDATE: Changed text color */ -->
-            <h3 class="text-3xl font-semibold text-text-primary mb-6 text-center">Queer Spaces Map</h3>
-            
-            <div id="map-diagram" class="rounded-lg relative">
-                <!-- Map will be injected here by JS -->
-                
-                <!-- Legend (back to overlay) -->
-                <div id="legend" class="absolute top-3 right-3 z-[1000] leaflet-control leaflet-bar">
-                    <!-- AESTHETIC UPDATE: Changed bg, shadow */ -->
-                    <div class="bg-white/90 backdrop-blur-sm p-4 md:p-6 rounded-lg shadow-sm border border-gray-200 h-full w-64">
-                        <!-- AESTHETIC UPDATE: Changed text color */ -->
-                        <p class="font-bold text-accent-dark mb-4 text-xl">Legend</p>
-                    
-                    <!-- Eras Legend -->
-                    <div class="mb-6">
-                        <!-- AESTHETIC UPDATE: Changed text color */ -->
-                        <p class="text-lg font-semibold text-secondary mb-3">Eras (Color):</p>
-                        <div class="space-y-2">
-                            <!-- Colors will be updated automatically by new palette -->
-                            <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border border-gray-400 mr-3" style="background-color: #5E5B57;"></span>
-                                <span class="text-text-secondary">1700s</span>
+        <section id="map-section" class="mirror-panel p-2 rounded-sm relative">
+            <div id="map-diagram" class="rounded-sm z-0"></div>
+            <!-- Lejand -->
+            <div id="legend" class="absolute top-4 right-4 z-[1000] leaflet-control hidden md:block">
+                <div class="bg-black/90 border border-white/20 p-4 rounded-sm w-56 backdrop-blur-md shadow-2xl">
+                    <p class="font-serif text-lipstick-red mb-3 text-lg border-b border-white/10 pb-2 italic">Legend</p>
+                    <div class="mb-4">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Dönemler</p>
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
+                                    class="w-2 h-2 rounded-full bg-[#333] border border-white/50"></span> 1700s</div>
+                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
+                                    class="w-2 h-2 rounded-full bg-[#555] border border-white/50"></span> Early 20th
                             </div>
-                            <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border border-gray-400 mr-3" style="background-color: #8A837D;"></span>
-                                <span class="text-text-secondary">Early 20th</span>
+                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
+                                    class="w-2 h-2 rounded-full bg-[#777] border border-white/50"></span> Mid-Century
                             </div>
-                            <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border border-gray-400 mr-3" style="background-color: #B0A9A1;"></span>
-                                <span class="text-text-secondary">Mid-Century</span>
+                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
+                                    class="w-2 h-2 rounded-full bg-[#AAA] border border-white/50"></span> Late 20th
                             </div>
-                            <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border border-gray-400 mr-3" style="background-color: #CFC9C1;"></span>
-                                <span class="text-text-secondary">Late 20th</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border border-gray-400 mr-3" style="background-color: #E5E1DA;"></span>
-                                <span class="text-text-secondary">21st Century</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Types Legend -->
-                    <div>
-                        <!-- AESTHETIC UPDATE: Changed text color */ -->
-                        <p class="text-lg font-semibold text-secondary mb-3">Types (Icon):</p>
-                        <div class="space-y-2">
-                            <div class="flex items-center">
-                                <span class="w-6 h-6 mr-2 text-text-secondary">🏠</span>
-                                <span class="text-text-secondary">Private/Domestic Residence</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-6 h-6 mr-2 text-text-secondary">⚡️</span>
-                                <span class="text-text-secondary">Temporary Social Gathering</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-6 h-6 mr-2 text-text-secondary">🍸</span>
-                                <span class="text-text-secondary">Commercial Club</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-6 h-6 mr-2 text-text-secondary">🍲</span>
-                                <span class="text-text-secondary">Shared & Co-operative Living</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-6 h-6 mr-2 text-text-secondary">🏢</span>
-                                <span class="text-text-secondary">Communal Squats & Social Centers</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="w-6 h-6 mr-2 text-text-secondary">🏛️</span>
-                                <span class="text-text-secondary">Historical Association</span>
+                            <div class="flex items-center gap-2 text-xs text-white font-bold"><span
+                                    class="w-2 h-2 rounded-full bg-[#FFF] border border-white"></span> 21st Century
                             </div>
                         </div>
                     </div>
                 </div>
-                </div>
             </div>
         </section>
 
-        <!-- Location Details Section -->
-        <section id="locations-section" class="p-4 md:p-6 rounded-lg content-panel">
-            <!-- AESTHETIC UPDATE: Changed text color */ -->
-            <h3 class="text-3xl font-semibold text-text-primary mb-8 text-center">Locations</h3>
-
-            <!-- AESTHETIC UPDATE: New 2-column grid layout -->
-            <div id="location-container" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Location cards will be injected here by JS -->
-            </div>
+        <section id="locations-section" class="pb-20">
+            <h3 class="text-3xl font-serif text-white mb-10 text-center"><span
+                    class="border-b border-lipstick-red pb-2 italic">The Archive</span></h3>
+            <div id="location-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </section>
 
-        <!-- Footer -->
-        <footer class="text-center p-6 mt-8">
-            <p class="text-sm text-text-secondary">Made with Gemini</p>
-        </footer>
     </div>
 
-
-    <!-- JavaScript Application Code -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- 1. DATA & STATE ---
+            // --- 1. ÖZEL İMLEÇ MANTIĞI ---
+            const cursor = document.getElementById('custom-cursor');
 
-            // Color object for reliable JS access
-            const ERA_COLORS = {
-                'era-1700s': '#5E5B57',
-                'era-early-20th': '#8A837D',
-                'era-mid-century': '#B0A9A1',
-                'era-late-20th': '#CFC9C1',
-                'era-21st-century': '#E5E1DA',
-            };
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
 
-            // Database of all locations
-            // IMAGE UPDATE: Adding imageUrl and imageAlt properties
-            const locations = [
-                // 1700s
-                {
-                    id: 'molly_houses_holborn',
-                    title: 'Molly-houses, Holborn',
-                    era: '1700s',
-                    type: 'Temporary Social Gathering',
-                    color: 'era-1700s',
-                    icon: '⚡️',
-                    coords: [51.5174, -0.1100], // General Holborn
-                    address: 'Holborn / Smithfield Area',
-                    description: "Private rooms or taverns (like Mother Clap's) where men socialized, cross-dressed, and formed relationships. These were 'domestic' spaces created *within* public ones, often erased by raids and moral panic.",
-                    imageUrl: 'https://media.londonmuseum.org.uk/images/A-Morning-Frolic-or-the-Transmut.width-1120.format-webp.webp',
-                    imageAlt: '18th-century print "A Morning Frolic or the Transmutation of Sexes"'
-                },
-                {
-                    id: 'strawberry_hill',
-                    title: 'Strawberry Hill House',
-                    era: '1700s',
-                    type: 'Private/Domestic Residence',
-                    color: 'era-1700s',
-                    icon: '🏠',
-                    coords: [51.4379, -0.3350], // 268 Waldegrave Rd, TW1 4ST
-                    address: 'Twickenham, TW1 4ST',
-                    description: "Horace Walpole's gothic villa. While not explicitly 'queer' in a modern sense, it represents a space of aestheticism and male relationships (Walpole, Thomas Gray, etc.) outside of traditional domesticity. A 'queer space' of taste and chosen family.",
-                    imageUrl: 'https://daily.jstor.org/wp-content/uploads/2021/01/strawberry_hill_1050x700.jpg',
-                    imageAlt: 'A photo of Strawberry Hill House, a white gothic villa'
-                },
-                {
-                    id: 'moorfields_cruising',
-                    title: "Moorfields ('Sodomites Walk')",
-                    era: '1700s',
-                    type: 'Historical Association', // Using this for a cruising ground
-                    color: 'era-1700s',
-                    icon: '🏛️',
-                    coords: [51.5188, -0.0883], // Finsbury Square
-                    address: 'Moorfields (Modern Finsbury Square)',
-                    description: "One of London's most notorious 18th-century cruising grounds, known as the 'Sodomites Walk'. This represents an early example of queer people claiming public space for social and sexual connection, a history often erased from official city maps.",
-                    imageUrl: 'https://i0.wp.com/biancawhitewrites.com/wp-content/uploads/2024/02/img_sodomites_shame_headpiece.png?resize=1024%2C693&ssl=1',
-                    imageAlt: 'An 18th-century illustration titled "The Sodomites Shame"'
-                },
-                // Early 20th
-                {
-                    id: 'fitzroy_square_25',
-                    title: '25 Fitzroy Square',
-                    era: 'Early 20th',
-                    type: 'Private/Domestic Residence',
-                    color: 'era-early-20th',
-                    icon: '🏠',
-                    coords: [51.5218, -0.1394], // 25 Fitzroy Square, W1T 6ER
-                    address: 'Fitzrovia, W1T 6ER',
-                    description: "Home to artist Duncan Grant and economist John Maynard Keynes. A central hub for the Bloomsbury Group, this domestic space was a hotbed of queer thought, art, and polyamorous relationships that defied Edwardian norms.",
-                    imageUrl: 'https://www.thetimes.com/imageserver/image/%2Fmethode%2Fsundaytimes%2Fprod%2Fweb%2Fbin%2Fb6f23d6c-fb73-11e6-8121-0035d63ed063.jpg?crop=1500%2C1000%2C0%2C0',
-                    imageAlt: 'A vintage photograph of 25 Fitzroy Square'
-                },
-                {
-                    id: 'lady_malcolms_balls',
-                    title: "Lady Malcolm's Servants' Balls",
-                    era: 'Early 20th',
-                    type: 'Temporary Social Gathering',
-                    color: 'era-early-20th',
-                    icon: '⚡️',
-                    coords: [51.5010, -0.1774], // Royal Albert Hall
-                    address: 'Royal Albert Hall, Kensington',
-                    description: "Ostensibly for domestic servants, these balls became a vital, temporary space for queer and gender-nonconforming people to dress and socialize openly, creating a spectacular, fleeting 'queer domesticity' in a grand public hall.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'bloomsbury_flats',
-                    title: 'Bloomsbury Group Flats',
-                    era: 'Early 20th',
-                    type: 'Shared & Co-operative Living',
-                    color: 'era-early-20th',
-                    icon: '🍲',
-                    coords: [51.5225, -0.1350], // Gordon Square
-                    address: 'Gordon Square, Bloomsbury',
-                    description: "Homes of Virginia Woolf, Lytton Strachey, and others. These shared flats were sites of intellectual and sexual liberation, where 'domestic' life was redefined by queer relationships, art, and philosophy, creating a network of chosen family.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                // Mid-Century
-                {
-                    id: 'gateways_club',
-                    title: 'The Gateways Club',
-                    era: 'Mid-Century',
-                    type: 'Commercial Club',
-                    color: 'era-mid-century',
-                    icon: '🍸',
-                    coords: [51.4886, -0.1706], // 239 King's Rd, SW3 5EJ
-                    address: 'Chelsea, SW3 5EJ',
-                    description: "A legendary lesbian club, famously hidden in a basement. For decades, it was one of the only safe 'homes' for lesbians in London, a domestic-like space for community and identity, hidden from the public eye.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'camden_shared_flats',
-                    title: 'Camden – shared flats',
-                    era: 'Mid-Century',
-                    type: 'Shared & Co-operative Living',
-                    color: 'era-mid-century',
-                    icon: '🍲',
-                    coords: [51.5350, -0.1440], // General Camden Town
-                    address: 'Camden Town',
-                    description: "In the post-war era, areas like Camden offered cheap rents. Queer men and women formed informal 'families' in shared flats, creating vital domestic support networks long before legal recognition.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'le_duce_club',
-                    title: 'Le Duce Club',
-                    era: 'Mid-Century',
-                    type: 'Commercial Club',
-                    color: 'era-mid-century',
-                    icon: '🍸',
-                    coords: [51.5143, -0.1362], // 25 D'Arblay Street, Soho
-                    address: 'Soho, W1F 8EJ',
-                    description: "A key gay club in 1960s Soho. While commercial, clubs like Le Duce functioned as community living rooms, essential for social life and identity formation in a still-hostile world. A public 'home' for many.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                // Late 20th
-                {
-                    id: 'brixton_squats_railton_rd',
-                    title: 'Brixton Squats (Railton Rd)',
-                    era: 'Late 20th',
-                    type: 'Communal Squats & Social Centers',
-                    color: 'era-late-20th',
-                    icon: '🏢',
-                    coords: [51.4580, -0.1075], // 78 Railton Road
-                    address: 'Railton Road, Brixton (e.g. 78 & 121)',
-                    description: "In the 70s/80s, Railton Road was a hub of radical politics. Squats became queer domestic spaces, communes, and social centers, like the Gay Liberation Front's base, blending home, activism, and community.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'royal_vauxhall_tavern',
-                    title: 'Royal Vauxhall Tavern',
-                    era: 'Late 20th',
-                    type: 'Commercial Club',
-                    color: 'era-late-20th',
-                    icon: '🍸',
-                    coords: [51.4884, -0.1223], // 372 Kennington Ln, SE11 5HY
-                    address: 'Vauxhall, SE11 5HY',
-                    description: "An iconic cabaret and performance venue since the post-war era. The RVT became a vital 'public house' for the queer community, a site of chosen family, drag performance, and resilience, famously during the 1980s AIDS crisis.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'gays_the_word',
-                    title: "Gay's the Word Bookshop",
-                    era: 'Late 20th',
-                    type: 'Communal Squats & Social Centers',
-                    color: 'era-late-20th',
-                    icon: '🏢',
-                    coords: [51.5244, -0.1259], // 66 Marchmont St, WC1N 1AB
-                    address: 'Bloomsbury, WC1N 1AB',
-                    description: "Opened in 1979, this bookshop became the UK's first dedicated LGBTQ+ bookshop. More than a store, it's a vital community hub, meeting space, and 'home' for queer information and activism, surviving erasure and attacks.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                // 21st Century
-                {
-                    id: 'vauxhall_lgbt_retirement',
-                    title: 'Tonic@Bankhouse',
-                    era: '21st-Century',
-                    type: 'Shared & Co-operative Living',
-                    color: 'era-21st-century',
-                    icon: '🍲',
-                    coords: [51.4926, -0.1200], // 20 Albert Embankment, SE1 7FY
-                    address: 'Vauxhall, SE1 7FY',
-                    description: "The UK's first LGBT+ affirmative retirement community. This is a deliberate, modern creation of a queer domestic space, ensuring safety, community, and shared identity for older queer people. A home for life.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'house_of_brag',
-                    title: 'House of Brag',
-                    era: '21st-Century',
-                    type: 'Communal Squats & Social Centers',
-                    color: 'era-21st-century',
-                    icon: '🏢',
-                    coords: [51.4880, -0.1068], // 42 Braganza St, SE17 3RD
-                    address: 'Kennington, SE17 3RD',
-                    description: "A queer, anti-racist, feminist squatting collective active in the 2010s. This continues the legacy of squatting as a tool to create autonomous queer domestic and social centers, existing outside of commercial or state-sponsored spaces.",
-                    imageUrl: '',
-                    imageAlt: ''
-                },
-                {
-                    id: 'lgbtq_community_centre',
-                    title: 'London LGBTQ+ Community Centre',
-                    era: '21st-Century',
-                    type: 'Communal Squats & Social Centers',
-                    color: 'era-21st-century',
-                    icon: '🏢',
-                    coords: [51.5085, -0.1009], // 60-62 Hopton St, SE1 9JH
-                    address: 'Blackfriars, SE1 9JH',
-                    description: "A modern, sober, intersectional community center. This space acts as a 'community living room' for all LGBTQ+ people, providing services, events, and a safe domestic-like space to simply exist. A visible, permanent 'home'.",
-                    imageUrl: '',
-                    imageAlt: ''
+            document.addEventListener('mousedown', () => {
+                cursor.classList.add('clicking-cursor');
+            });
+            document.addEventListener('mouseup', () => {
+                cursor.classList.remove('clicking-cursor');
+            });
+
+            // Hover Efekti
+            document.body.addEventListener('mouseover', (e) => {
+                if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.location-card') || e.target.closest('.leaflet-interactive')) {
+                    document.body.classList.add('hovering');
+                } else {
+                    document.body.classList.remove('hovering');
                 }
+            });
+
+            // --- 2. GELİŞMİŞ TIKLAMA SESİ (Audio Pool) ---
+            // Ses dosyası URL'si
+            const soundUrl = 'https://files.catbox.moe/id40qe.mp3';
+
+            // Çoklu ses kanalı oluştur (hızlı tıklamalarda üst üste binebilmesi için)
+            const audioPool = [];
+            const poolSize = 5; // Aynı anda çalabilecek maksimum ses sayısı
+
+            for (let i = 0; i < poolSize; i++) {
+                const a = new Audio(soundUrl);
+                a.volume = 0.4; // Ses seviyesi (%40)
+                audioPool.push(a);
+            }
+
+            let poolIndex = 0;
+
+            document.addEventListener('click', () => {
+                const sound = audioPool[poolIndex];
+                sound.currentTime = 0; // Başa sar
+                sound.play().catch(e => console.log("Ses çalınamadı (Tarayıcı engeli olabilir)", e));
+
+                // Bir sonraki kanala geç
+                poolIndex = (poolIndex + 1) % poolSize;
+            });
+
+
+            // --- 3. HARİTA & VERİ ---
+            const ERA_COLORS = { 'era-1700s': '#333', 'era-early-20th': '#555', 'era-mid-century': '#777', 'era-late-20th': '#AAA', 'era-21st-century': '#FFF' };
+            const locations = [
+                { id: 'molly', title: 'Molly-houses', era: '1700s', icon: '⚡️', color: 'era-1700s', coords: [51.5174, -0.1100], addr: 'Holborn', desc: 'Underground taverns for socialization and cross-dressing.', img: 'https://media.londonmuseum.org.uk/images/A-Morning-Frolic-or-the-Transmut.width-1120.format-webp.webp' },
+                { id: 'strawberry', title: 'Strawberry Hill', era: '1700s', icon: '🏠', color: 'era-1700s', coords: [51.4379, -0.3350], addr: 'Twickenham', desc: 'Gothic villa representing queer aestheticism.', img: 'https://daily.jstor.org/wp-content/uploads/2021/01/strawberry_hill_1050x700.jpg' },
+                { id: 'moorfields', title: 'Moorfields', era: '1700s', icon: '🏛️', color: 'era-1700s', coords: [51.5188, -0.0883], addr: 'Finsbury', desc: 'Notorious cruising ground.', img: 'https://i0.wp.com/biancawhitewrites.com/wp-content/uploads/2024/02/img_sodomites_shame_headpiece.png?resize=1024%2C693&ssl=1' },
+                { id: 'fitzroy', title: '25 Fitzroy Sq', era: 'Early 20th', icon: '🏠', color: 'era-early-20th', coords: [51.5218, -0.1394], addr: 'Fitzrovia', desc: 'Bloomsbury Group hub.', img: 'https://www.thetimes.com/imageserver/image/%2Fmethode%2Fsundaytimes%2Fprod%2Fweb%2Fbin%2Fb6f23d6c-fb73-11e6-8121-0035d63ed063.jpg?crop=1500%2C1000%2C0%2C0' },
+                { id: 'gateways', title: 'The Gateways', era: 'Mid-Century', icon: '🍸', color: 'era-mid-century', coords: [51.4886, -0.1706], addr: 'Chelsea', desc: 'Legendary lesbian club behind a green door.', img: 'https://ichef.bbci.co.uk/news/976/cpsprodpb/1399/production/_103658979_gateways.jpg' },
+                { id: 'rvt', title: 'Royal Vauxhall Tavern', era: 'Late 20th', icon: '🍸', color: 'era-late-20th', coords: [51.4884, -0.1223], addr: 'Vauxhall', desc: 'Iconic performance venue and community hub.', img: 'https://static.standard.co.uk/s3fs-public/thumbnails/image/2015/09/08/12/RVT.jpg?width=1200' },
+                { id: 'gays_word', title: "Gay's the Word", era: 'Late 20th', icon: '🏢', color: 'era-late-20th', coords: [51.5244, -0.1259], addr: 'Bloomsbury', desc: 'UK\'s first dedicated LGBTQ+ bookshop.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Gay%27s_The_Word_shop_front.jpg/1200px-Gay%27s_The_Word_shop_front.jpg' },
+                { id: 'tonic', title: 'Tonic@Bankhouse', era: '21st-Century', icon: '🍲', color: 'era-21st-century', coords: [51.4926, -0.1200], addr: 'Vauxhall', desc: 'LGBT+ affirmative retirement community.', img: 'https://images.squarespace-cdn.com/content/v1/5b603c6a36099b6781c03958/1632133582464-5L8L7G8Q4Q4Q4Q4Q4Q4Q/Tonic%40Bankhouse+Exterior.jpg' }
             ];
 
-
-            // --- 2. INITIALIZATION ---
-            
-            let map;
-            const markers = {};
-            let highlightedMarker = null;
-            let highlightedCard = null;
-            
-            const locationContainer = document.getElementById('location-container');
+            // HARİTA BAŞLATMA
+            let map, markers = {}, highlightedMarker = null, highlightedCard = null;
+            const container = document.getElementById('location-container');
 
             try {
-                // Initialize Leaflet Map
-                map = L.map('map-diagram', {
-                    zoomControl: false // Disable default zoom control
-                }).setView([51.505, -0.14], 12); // Centered on London at a good zoom
-                
-                // Add zoom control to a different position (bottom-right)
+                map = L.map('map-diagram', { zoomControl: false }).setView([51.505, -0.14], 12);
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '&copy; CARTO' }).addTo(map);
 
+                locations.forEach(loc => {
+                    // Kart
+                    const card = document.createElement('div');
+                    card.id = `card-${loc.id}`;
+                    card.className = `location-card rounded-sm group`;
+                    card.innerHTML = `<div class="w-full h-52 overflow-hidden relative border-b border-white/10"><img src="${loc.img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x400/111/333?text=Hidden'"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent opacity-80"></div></div><div class="p-6 relative z-10"><div class="flex items-center justify-between mb-3"><span class="text-2xl drop-shadow-lg">${loc.icon}</span><span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 border border-gray-600 px-2 py-1 rounded-full bg-black/50">${loc.era}</span></div><h4 class="text-xl font-serif text-white mb-1 group-hover:text-lipstick-red transition-colors italic">${loc.title}</h4><p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">${loc.addr}</p><p class="text-sm readable-text opacity-80 group-hover:opacity-100 transition-opacity">${loc.desc}</p></div>`;
+                    card.addEventListener('click', () => navigateToDetailPage(loc.id));
+                    container.appendChild(card);
 
-                // AESTHETIC UPDATE: Use a minimal, light-colored map from CartoDB
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                }).addTo(map);
-
-                // Populate location cards and map markers
-                populateLocations();
-            } catch (error) {
-                console.error("Map initialization failed:", error);
-                document.getElementById('map-diagram').innerHTML = `
-                    <div class="h-full w-full flex items-center justify-center bg-red-100 text-red-700 p-4 rounded-lg">
-                        <strong>Error:</strong> Failed to load the map. Please check your internet connection and try refreshing the page.
-                    </div>
-                `;
-            }
-
-            // --- 3. CORE FUNCTIONS ---
-
-            /**
-             * Create all location cards and map markers from the data
-             */
-            function populateLocations() {
-                locations.forEach(location => {
-                    createLocationCard(location);
-                    createMapMarker(location);
+                    // Marker
+                    const icon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:${ERA_COLORS[loc.color]};" class="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white/30 text-white shadow-lg transition-transform hover:scale-125"><span class="text-xs">${loc.icon}</span></div>`, iconSize: [32, 32], iconAnchor: [16, 16] });
+                    const marker = L.marker(loc.coords, { icon: icon }).addTo(map);
+                    marker.bindTooltip(loc.title, { permanent: false, direction: 'top', offset: [0, -20], className: 'bg-black text-white border border-white/20 px-2 py-1 rounded text-xs' });
+                    marker.on('click', () => scrollToLocationCard(loc.id));
+                    markers[loc.id] = marker;
                 });
-            }
+            } catch (e) { console.error(e); }
 
-            /**
-             * Create and append a single location card
-             * @param {object} location - The location data object
-             */
-            function createLocationCard(location) {
-                const card = document.createElement('div');
-                card.id = `card-${location.id}`;
-                
-                const eraColor = ERA_COLORS[location.color];
-                
-                // --- Determine text colors based on background lightness ---
-                const isLightBg = location.color === 'era-21st-century' || location.color === 'era-late-20th';
-                const primaryTextClass = isLightBg ? 'text-text-primary' : 'text-text-on-color';
-                const secondaryTextClass = isLightBg ? 'text-text-secondary' : 'text-text-on-color';
-                // Make secondary white text slightly transparent
-                const secondaryTextOpacity = isLightBg ? 'opacity-100' : 'opacity-80'; 
-
-                // --- Set card class and background color ---
-                card.className = `location-card rounded-lg shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden`;
-                card.style.backgroundColor = eraColor;
-
-
-                // --- NEW: Use real image if available, else placeholder ---
-                const imgSrc = location.imageUrl || `https://placehold.co/800x400/000000/FFFFFF?text=${encodeURIComponent(location.title)}&font=inter`;
-                const imgAlt = location.imageAlt || `Placeholder image for ${location.title}`;
-
-                // --- UPDATE: Add real image src/alt and better onerror ---
-                card.innerHTML = `
-                    <!-- IMAGE PLACEHOLDER -->
-                    <div class="w-full h-48 bg-black/10">
-                        <img src="${imgSrc}" 
-                             alt="${imgAlt}" 
-                             class="w-full h-48 object-cover opacity-70"
-                             onerror="this.src='https://placehold.co/800x400/E5E1DA/5E5B57?text=Image+Not+Found&font=inter'; this.onerror=null;">
-                    </div>
-                    
-                    <!-- CARD CONTENT -->
-                    <div class="p-6 ${primaryTextClass}">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-3xl">${location.icon}</span>
-                            <!-- Era Tag Removed, as card is now colored -->
-                        </div>
-                        <h4 class="text-2xl font-bold mt-3 mb-1">${location.title}</h4>
-                        <p class="text-sm ${secondaryTextClass} ${secondaryTextOpacity} mb-3 font-sans">${location.address}</p>
-                        <p class="text-base ${secondaryTextClass} ${secondaryTextOpacity} leading-relaxed">${location.description}</p>
-                        <p class="text-xs ${secondaryTextClass} ${secondaryTextOpacity} font-semibold mt-4 opacity-80 uppercase tracking-wider">${location.type}</p>
-                    </div>
-                `;
-                
-                // Add click event listener to the card - navigate to detail page
-                card.addEventListener('click', () => {
-                    navigateToDetailPage(location.id);
-                });
-                
-                locationContainer.appendChild(card);
-            }
-
-            /**
-             * Create and add a single marker to the map
-             * @param {object} location - The location data object
-             */
-            function createMapMarker(location) {
-                // Use the reliable JS color object
-                const bgColor = ERA_COLORS[location.color] || '#333';
-                // AESTHETIC UPDATE: Check if icon should be dark or light
-                const iconColor = location.color === 'era-21st-century' || location.color === 'era-late-20th' ? '#2E2E2E' : 'white';
-                
-                // Custom HTML icon
-                const customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color: ${bgColor}; color: ${iconColor};" class="w-10 h-10 rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-white opacity-90">${location.icon}</div>`,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20] // Center of the icon
-                });
-
-                const marker = L.marker(location.coords, { icon: customIcon }).addTo(map);
-                
-                // Add tooltip
-                marker.bindTooltip(location.title, {
-                    permanent: false,
-                    direction: 'top',
-                    offset: [0, -20]
-                });
-                
-                // Add click event listener to the marker
-                marker.on('click', () => {
-                    handleInteraction(location.id);
-                });
-                
-                // Store marker in the global object
-                markers[location.id] = marker;
-            }
-
-            /**
-             * Handle click interaction from either a card or a marker
-             * @param {string} id - The ID of the location
-             */
-            function handleInteraction(id) {
-                const marker = markers[id];
-                const card = document.getElementById(`card-${id}`);
-                const location = locations.find(l => l.id === id);
-
-                if (!marker || !card || !location) return;
-
-                // --- 1. Clear previous highlights ---
-                if (highlightedMarker) {
-                    highlightedMarker.classList.remove('marker-highlighted');
-                }
-                if (highlightedCard) {
-                    highlightedCard.classList.remove('card-highlighted');
-                }
-
-                // --- 2. Apply new highlight ---
-                marker.getElement().classList.add('marker-highlighted');
-                card.classList.add('card-highlighted');
-                
-                highlightedMarker = marker.getElement();
-                highlightedCard = card;
-
-                // --- 3. Fly to location ---
-                map.flyTo(location.coords, 15, { // Zoom in closer
-                    animate: true,
-                    duration: 1.0
-                });
-
-                // --- 4. Scroll card into view ---
-                card.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center', // Changed to 'center' for better scrolling in a long list
-                });
-            }
-
-            /**
-             * Navigate to detail page for a specific location
-             * @param {string} id - The ID of the location
-             */
             function navigateToDetailPage(id) {
                 const location = locations.find(l => l.id === id);
                 if (!location) return;
-                
-                // Create URL parameters for the detail page
+
+                // Derive type from icon or use default
+                const iconToType = {
+                    '⚡️': 'Temporary Social Gathering',
+                    '🏠': 'Private/Domestic Residence',
+                    '🍸': 'Commercial Club',
+                    '🍲': 'Shared & Co-operative Living',
+                    '🏢': 'Commercial Club',
+                    '🏛️': 'Historical Association'
+                };
+                const type = iconToType[location.icon] || 'Temporary Social Gathering';
+
+                // Create URL parameters
                 const params = new URLSearchParams({
                     id: location.id,
-                    title: location.title,
-                    era: location.era,
-                    type: location.type,
-                    address: location.address,
-                    description: location.description,
-                    imageUrl: location.imageUrl || '',
-                    imageAlt: location.imageAlt || '',
+                    title: encodeURIComponent(location.title),
+                    era: encodeURIComponent(location.era),
+                    type: encodeURIComponent(type),
+                    addr: encodeURIComponent(location.addr),
+                    desc: encodeURIComponent(location.desc),
+                    img: encodeURIComponent(location.img || ''),
                     coords: location.coords.join(',')
                 });
-                
+
                 // Navigate to detail page
                 window.location.href = `location-detail.html?${params.toString()}`;
             }
 
+            function scrollToLocationCard(id) {
+                const m = markers[id], c = document.getElementById(`card-${id}`), l = locations.find(x => x.id === id);
+                if (!m || !c) return;
+                if (highlightedMarker) highlightedMarker.classList.remove('marker-highlighted');
+                if (highlightedCard) highlightedCard.classList.remove('card-highlighted');
+                m.getElement().classList.add('marker-highlighted');
+                c.classList.add('card-highlighted');
+                highlightedMarker = m.getElement(); highlightedCard = c;
+                map.flyTo(l.coords, 14, { animate: true, duration: 1.2 });
+                c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // sound effect
+            const Sound = document.getElementById('Sound');
+
+            // Play sound on any click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.leaflet-container') &&
+                    !e.target.closest('.leaflet-control-zoom') &&
+                    !e.target.closest('a[href^="http"]')) {
+                    Sound.currentTime = 0;
+                    Sound.volume = 0.3; // Lower volume
+                    Sound.play().catch(e => console.log('Sound play failed:', e));
+                }
+            });
+
+            // Also play sound when hovering over interactive elements
+            const interactiveElements = document.querySelectorAll('a, button, .location-card, .leaflet-interactive');
+            interactiveElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    Sound.currentTime = 0.5; // Start from middle of sound
+                    Sound.volume = 0.2; // Even lower volume for hover
+                    Sound.play().catch(e => { });
+                });
+            });
+        });
+    </script>
+
 </body>
+
 </html>
