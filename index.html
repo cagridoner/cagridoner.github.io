@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Queer Domesticity: Mirror Edition</title>
+    <title>Queer London: Domestic Sanctuaries</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,19 +18,10 @@
                         serif: ['Playfair Display', 'serif'],
                     },
                     colors: {
-                        'mirror-dark': '#050505',
-                        'silver-plate': '#E8E8E8',
+                        'obsidian': '#050505',
+                        'silver-chrome': '#C0C0C0',
                         'lipstick-red': '#D90429',
-                        'deep-red': '#600110',
-                    },
-                    animation: {
-                        'pulse-red': 'pulseRed 2s infinite',
-                    },
-                    keyframes: {
-                        pulseRed: {
-                            '0%, 100%': { boxShadow: '0 0 0 0 rgba(217, 4, 41, 0.4)' },
-                            '70%': { boxShadow: '0 0 0 10px rgba(217, 4, 41, 0)' },
-                        }
+                        'deep-night': '#0A0A0A',
                     }
                 },
             },
@@ -42,399 +32,448 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-    <!-- Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
-        rel="stylesheet">
-
-    <!-- Icons -->
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
-        /* --- İMLEÇ AYARLARI --- */
-
-        /* 1. Gerçek mouse'u gizle */
-        body,
-        a,
-        button,
-        .location-card,
-        .leaflet-interactive {
+        /* --- CUSTOM CURSOR --- */
+        body, a, button, .location-card, 
+        .leaflet-interactive, .leaflet-container, .leaflet-grab, 
+        .leaflet-marker-icon, .leaflet-control, .leaflet-pane {
             cursor: none !important;
         }
 
-        /* 2. Özel İmleç Div'i */
         #custom-cursor {
             position: fixed;
             top: 0;
             left: 0;
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             z-index: 10000;
             pointer-events: none;
             background-image: url('https://files.catbox.moe/u70y1m.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            /* HALO EFEKTİ */
-            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-            transition: transform 0.05s linear;
-            /* Daha hızlı tepki süresi */
+            filter: drop-shadow(0 0 5px rgba(217, 4, 41, 0.8));
+            transition: transform 0.1s ease-out;
             transform: translate(-50%, -50%);
         }
 
-        /* Tıklama efekti */
         .clicking-cursor {
-            transform: translate(-50%, -50%) scale(0.8) !important;
-            filter: drop-shadow(0 0 10px #D90429) !important;
+            transform: translate(-50%, -50%) scale(0.7) !important;
+            filter: drop-shadow(0 0 15px #D90429) brightness(1.5) !important;
         }
 
         body.hovering #custom-cursor {
             transform: translate(-50%, -50%) scale(1.3);
-            filter: drop-shadow(0 0 5px #D90429);
+            filter: drop-shadow(0 0 8px #D90429);
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #0a0a0a;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-            border: 1px solid #000;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #D90429;
-        }
-
-        /* --- STİLLER --- */
+        /* --- UI STYLES --- */
         body {
             background-color: #050505;
             color: #E8E8E8;
-            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000000 100%);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(217, 4, 41, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.02) 0%, transparent 40%);
             overflow-x: hidden;
+            min-height: 100vh;
         }
 
-        /* Ayna Panelleri */
-        .mirror-panel {
-            background: linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-top: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(12px);
-        }
-
-        /* Kart Tasarımı */
-        .location-card {
-            background: rgba(20, 20, 20, 0.6);
+        .obsidian-panel {
+            background: linear-gradient(145deg, rgba(20, 20, 20, 0.9), rgba(5, 5, 5, 0.98));
             border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+        }
+
+        .location-card {
+            background: rgba(15, 15, 15, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .location-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: skewX(-25deg);
-            transition: 0.5s;
-            z-index: 20;
-            pointer-events: none;
-        }
-
-        .location-card:hover::before {
-            left: 150%;
-            transition: 0.7s;
         }
 
         .location-card:hover {
             border-color: #D90429;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(217, 4, 41, 0.15);
-            background: rgba(30, 30, 30, 0.8);
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(25, 25, 25, 0.9);
+            box-shadow: 0 10px 40px rgba(217, 4, 41, 0.15);
         }
 
-        .location-card img {
-            filter: grayscale(100%) contrast(110%) brightness(80%);
-            transition: all 0.5s ease;
-        }
-
-        .location-card:hover img {
-            filter: grayscale(0%) contrast(100%) brightness(100%);
-        }
-
-        .card-highlighted {
-            border: 1px solid #D90429 !important;
-            box-shadow: 0 0 30px rgba(217, 4, 41, 0.4) !important;
-            transform: scale(1.02);
-            z-index: 50;
-        }
-
-        /* Harita */
-        #map-diagram {
+        #map-diagram, #detail-map {
             height: 550px;
             width: 100%;
-            background-color: #111;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            filter: grayscale(100%) contrast(110%) brightness(70%);
-            transition: all 0.5s ease;
+            background-color: #000;
+            filter: grayscale(1) contrast(1.2) brightness(0.8);
+            transition: all 0.6s ease;
         }
 
         #map-diagram:hover {
-            filter: grayscale(60%) contrast(100%) brightness(85%);
+            filter: grayscale(0.5) contrast(1) brightness(0.7);
         }
 
-        .marker-highlighted div {
-            background-color: #D90429 !important;
-            color: white !important;
-            transform: scale(1.3);
-            box-shadow: 0 0 20px #D90429 !important;
-            border-color: white !important;
-            z-index: 999;
+        .view-hidden { display: none !important; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D90429; }
+
+        .leaflet-tooltip-archive {
+            background: rgba(5, 5, 5, 0.9) !important;
+            border: 1px solid #D90429 !important;
+            color: #FFF !important;
+            font-family: 'Playfair Display', serif !important;
+            font-style: italic !important;
+            font-size: 13px !important;
+            box-shadow: 0 5px 20px rgba(217, 4, 41, 0.3) !important;
+            backdrop-filter: blur(8px) !important;
+            padding: 5px 12px !important;
+        }
+
+        .tab-active {
+            color: #D90429;
+            border-bottom: 2px solid #D90429;
+            text-shadow: 0 0 10px rgba(217, 4, 41, 0.5);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .archival-frame {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4px;
+            background: #000;
+        }
+        .archival-frame::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border: 1px solid rgba(217, 4, 41, 0.1);
+            pointer-events: none;
         }
     </style>
-
-    <!-- Sound Effect -->
-    <audio id="Sound" preload="auto">
-        <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
-    </audio>
-
 </head>
+<body class="selection:bg-lipstick-red selection:text-white">
 
-<body class="min-h-screen pb-24 selection:bg-lipstick-red selection:text-white">
-
-    <!-- ÖZEL İMLEÇ DİV'İ -->
     <div id="custom-cursor"></div>
 
-    <!-- İÇERİK -->
-    <div class="max-w-7xl mx-auto space-y-12 pt-12 px-6">
-        <header class="text-center py-8 relative">
-            <div
-                class="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-lipstick-red to-transparent opacity-50">
+    <!-- MAIN VIEW -->
+    <div id="archive-view" class="max-w-7xl mx-auto space-y-16 pt-16 px-6 pb-24">
+        <header class="text-center relative flex flex-col items-center">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-px h-32 bg-gradient-to-b from-transparent via-lipstick-red/50 to-transparent"></div>
+            <h1 class="text-6xl md:text-9xl font-serif mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-600 drop-shadow-2xl tracking-tighter">Queer Domestic Sanctuaries</h1>
+            <div class="max-w-2xl text-gray-400 font-light leading-relaxed tracking-wide opacity-90 italic text-xl px-4 text-center">
+                London’s history is written not only in its public monuments but in its private thresholds. This spatial record documents the reclamation of the home while exploring how domesticity was reimagined as a site for the construction of identity, resistance, and chosen family.
             </div>
-            <h1
-                class="text-6xl md:text-8xl font-serif mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 drop-shadow-2xl">
-                Queer London</h1>
-            <h2 class="text-3xl md:text-4xl font-serif italic text-gray-400 mb-6">& The Politics of <span
-                    class="text-lipstick-red underline decoration-1 underline-offset-4">Erasure</span></h2>
-            <p
-                class="text-silver-plate text-xs md:text-sm tracking-[0.3em] font-bold uppercase border-t border-b border-white/10 py-4 inline-block">
-                Domesticity • Resistance • Archive</p>
+            <div class="mt-12 h-px w-32 bg-gradient-to-r from-transparent via-lipstick-red to-transparent"></div>
         </header>
 
-        <section id="map-section" class="mirror-panel p-2 rounded-sm relative">
-            <div id="map-diagram" class="rounded-sm z-0"></div>
-            <!-- Lejand -->
-            <div id="legend" class="absolute top-4 right-4 z-[1000] leaflet-control hidden md:block">
-                <div class="bg-black/90 border border-white/20 p-4 rounded-sm w-56 backdrop-blur-md shadow-2xl">
-                    <p class="font-serif text-lipstick-red mb-3 text-lg border-b border-white/10 pb-2 italic">Legend</p>
-                    <div class="mb-4">
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Dönemler</p>
-                        <div class="space-y-1.5">
-                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
-                                    class="w-2 h-2 rounded-full bg-[#333] border border-white/50"></span> 1700s</div>
-                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
-                                    class="w-2 h-2 rounded-full bg-[#555] border border-white/50"></span> Early 20th
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
-                                    class="w-2 h-2 rounded-full bg-[#777] border border-white/50"></span> Mid-Century
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-gray-300"><span
-                                    class="w-2 h-2 rounded-full bg-[#AAA] border border-white/50"></span> Late 20th
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-white font-bold"><span
-                                    class="w-2 h-2 rounded-full bg-[#FFF] border border-white"></span> 21st Century
+        <section class="obsidian-panel p-1 rounded-none relative group overflow-hidden">
+            <div id="map-diagram" class="rounded-none z-0"></div>
+            <div class="absolute top-4 left-4 z-10 text-[9px] text-white/30 uppercase tracking-[0.4em] font-bold border-l border-lipstick-red pl-2">London Geographic Profile</div>
+            <div class="absolute bottom-4 right-4 z-10 text-[9px] text-lipstick-red uppercase tracking-[0.3em] font-bold">Encrypted Spatial Data</div>
+        </section>
+
+        <section class="pb-20">
+            <h3 class="text-xs font-sans text-gray-500 mb-12 text-center uppercase tracking-[0.8em] font-bold">The Repository</h3>
+            <div id="location-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+        </section>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div id="detail-view" class="view-hidden">
+        <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-5 bg-black/80 backdrop-blur-xl border-b border-white/5">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <button onclick="showArchive()" class="text-silver-chrome hover:text-lipstick-red flex items-center gap-3 transition-all duration-500 text-xs tracking-[0.4em] uppercase font-bold group">
+                    <i class="ph ph-arrow-left text-lg group-hover:-translate-x-1 transition-transform"></i> Return to Repository
+                </button>
+                <h1 class="text-base font-serif italic text-white/40 hidden md:block">Spatial Record No. <span id="record-num">00</span></h1>
+                <div class="w-32"></div>
+            </div>
+        </nav>
+
+        <main class="pt-32 pb-12">
+            <div class="max-w-[1400px] mx-auto px-8 space-y-20">
+                <header class="text-center relative">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-px h-16 bg-lipstick-red/30"></div>
+                    <h1 id="det-title" class="text-5xl md:text-8xl font-serif mb-6 text-white drop-shadow-2xl"></h1>
+                    <p id="det-addr" class="text-sm text-lipstick-red font-bold mb-4 tracking-[0.5em] uppercase"></p>
+                    <span id="det-era" class="inline-block px-5 py-1.5 border border-white/10 text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] bg-white/5"></span>
+                </header>
+
+                <section class="grid md:grid-cols-12 gap-16 items-start">
+                    <!-- UNIFIED STICKY IMAGE COLUMN -->
+                    <div id="det-images-column" class="md:col-span-5 sticky top-28 space-y-12 pb-12 max-h-[85vh] overflow-y-auto no-scrollbar">
+                        <!-- element content injected via JS -->
+                    </div>
+                    
+                    <!-- TEXT COLUMN -->
+                    <div class="md:col-span-7 space-y-10 leading-relaxed">
+                        <!-- TABS -->
+                        <div class="flex gap-10 border-b border-white/5 pb-0 mb-6">
+                            <button onclick="setTab('narrative')" id="tab-narrative" class="text-xs tracking-[0.4em] uppercase font-bold transition-all pb-4 tab-active">Spatial Investigation</button>
+                            <button onclick="setTab('biblio')" id="tab-biblio" class="text-xs tracking-[0.4em] uppercase font-bold transition-all pb-4 text-gray-600 hover:text-lipstick-red">Bibliography</button>
+                        </div>
+
+                        <!-- CONTENT PANES -->
+                        <div id="pane-narrative" class="space-y-10">
+                            <div id="det-desc" class="text-xl text-gray-300 font-light leading-relaxed tracking-wide selection:bg-lipstick-red selection:text-white"></div>
+                        </div>
+
+                        <div id="pane-biblio" class="view-hidden space-y-10">
+                            <div id="det-biblio" class="text-lg text-gray-500 font-serif italic space-y-8 pl-6 border-l border-lipstick-red/30">
+                                <!-- Sources injected here -->
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                <section class="space-y-8 pt-20 border-t border-white/5">
+                    <h2 class="text-xs font-sans font-bold text-gray-600 uppercase tracking-[0.6em]">Spatial Identification</h2>
+                    <div class="obsidian-panel p-1 rounded-none shadow-2xl">
+                        <div id="detail-map" class="rounded-none"></div>
+                    </div>
+                </section>
             </div>
-        </section>
-
-        <section id="locations-section" class="pb-20">
-            <h3 class="text-3xl font-serif text-white mb-10 text-center"><span
-                    class="border-b border-lipstick-red pb-2 italic">The Archive</span></h3>
-            <div id="location-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
-        </section>
-
+        </main>
     </div>
 
+    <audio id="clickSound" preload="auto">
+        <source src="https://files.catbox.moe/id40qe.mp3" type="audio/mp3">
+    </audio>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        const locations = [
+            { 
+                id: 'molly', title: 'Molly-houses', era: '18th Century', icon: '⚡️', color: '#D90429', coords: [51.5174, -0.1100], addr: 'Holborn', 
+                desc: `The eighteenth-century London molly house functioned as an alternative social space that redefined the relationship between domestic life and queer identity. Located within dense urban areas, these establishments provided a vital infrastructure for a subculture of men who existed outside the era's rigid gender and sexual norms (Norton, 1992). At a time when non-normative behavior was heavily criminalized, these sites offered a rare sanctuary where individuals could explore identities that were strictly forbidden in the public sphere (Higgs, 1999). The spatial arrangement of these houses was central to their function, supporting a performative version of domestic life that challenged traditional Georgian social structures (Azfar, 2014).
 
-            // --- 1. ÖZEL İMLEÇ MANTIĞI ---
-            const cursor = document.getElementById('custom-cursor');
+The interiors of these establishments were typically organized to balance communal and private functions. Main rooms acted as social stages for the expression of feminine personas and the practice of "camping," where patrons adopted new names and mannerisms. These public-facing areas of the house allowed for a collective subversion of gender roles through gossip, fashion, and shared social rituals. In contrast, more secluded areas or backrooms hosted specific rituals that reclaimed conventional social milestones, such as commitment ceremonies. This creative reimagining of the domestic environment allowed for the formation of "chosen families," offering a sense of community and belonging in a restrictive society that denied such structures to queer individuals (Norton, 1992).
 
-            document.addEventListener('mousemove', (e) => {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
+Furthermore, the presence of rooms dedicated to informal wedding ceremonies blurred the distinction between the private home and the public tavern. By utilizing the architectural language of the home—parlors, bedrooms, and hearths—for subversive social gatherings, the molly house transformed the concept of "domesticity" into a tool for resistance. These spaces were not merely places of leisure but were essential for the survival and visibility of a marginalized community (Higgs, 1999). However, this queer architecture remained under constant threat from moral authorities and volunteer surveillance groups. Historical records of raids and the subsequent state-sanctioned violence against patrons demonstrate the high stakes involved in maintaining these environments.
+
+Ultimately, the molly house represents an early and significant example of spatial resistance. Within these walls, domestic settings and everyday objects were repurposed as a canvas for exploring fluid identities and the complexities of persona within a hostile urban environment. They provided a blueprint for how marginalized groups can inhabit and transform architectural space to reflect their own lived experiences, effectively creating a "home" where none was officially permitted.`, 
+                img: 'https://media.londonmuseum.org.uk/images/A-Morning-Frolic-or-the-Transmut.width-1120.format-webp.webp',
+                extraImages: ['https://ajwestauthor.com/wp-content/uploads/2024/07/Fuente-Mother-Clap-s-Molly-House-The-gay-subculture-in-England-1700-1830-Rictor.png'],
+                biblio: ["Azfar, F. (2014) Slavery, Sodomy, and the State: The World of XVIII Century London.", "Higgs, D. (1999) Queer Sites: Gay Urban Histories Since 1600. London: Routledge.", "Norton, R. (1992) Mother Clap's Molly House: The Gay Subculture in England 1700-1830. London: Gay Men's Press."]
+            },
+            { 
+                id: 'strawberry', title: 'Strawberry Hill House', era: '18th Century', icon: '🏠', color: '#D90429', coords: [51.4379, -0.3350], addr: 'Twickenham', 
+                desc: `Strawberry Hill represents a significant departure from eighteenth-century architectural norms, serving as a primary case study for the intersection of Gothic Revival and queer domesticity (Haggerty, 2006). Rather than adhering to the rigid symmetry and public-facing logic of standard Georgian villas, the design prioritizes a labyrinthine interiority. This architectural shift allowed the domestic sphere to be reimagined as a site for the construction of a non-traditional persona (Betsky, 1997). By utilizing a "Gothic" vocabulary, the house moved away from the patriarchal order of the Enlightenment, creating a sanctuary where the interior environment was tailored to a specific, individualized lived experience.
+
+The interior organization was defined by a deliberate manipulation of light, scale, and materiality to produce a theatrical atmosphere. The juxtaposition of grand, vaulted ceilings with narrow, shadowed corridors created a series of private moments within the home. This spatial complexity allowed for a performance of domesticity that was not centered on traditional family structures, but rather on the curation of a "chosen" history through objects and art (Rendell, Penner and Borden, 2000). The domestic setting functioned as a protective layer, where the boundaries between the private self and the public figure could be blurred. Through this unique use of space, the house became a medium for "spatial writing," where the physical layout of the rooms expressed a narrative that challenged the heteronormative expectations of the era.
+
+Furthermore, the villa functions as an early precursor to the "queer interior," where the home is utilized as a canvas for exploring fluid identities (Haggerty, 2006). The unconventional floor plan enabled a specific way of moving through the building—one that favored discovery and eccentric transitions over logical, axial progression. By repurposing traditional domestic elements and historical aesthetics, the architecture created a space for a marginalized identity to exist within a highly controlled environment. Ultimately, Strawberry Hill demonstrates how the domestic landscape can be transformed from a site of social conformity into a tool for self-expression and the reclamation of personal space.`, 
+                img: 'https://daily.jstor.org/wp-content/uploads/2021/01/strawberry_hill_1050x700.jpg',
+                extraImages: ['https://cms.showstudio.com/images/aoGcbJ1l2zsv6PxTqTLlYuRHXOQ=/329308/width-1440/images_60671.jpg', 'https://www.strawberryhillhouse.org.uk/wp-content/uploads/2017/04/The-Collection.jpg'],
+                biblio: ["Betsky, A. (1997) Queer Space: Architecture and Same-Sex Desire. New York: Morrow.", "Haggerty, G. E. (2006) Queer Gothic. Urbana: University of Illinois Press.", "Rendell, J., Penner, B. and Borden, I. (2000) Gender Space Architecture. London: Routledge."]
+            },
+            { 
+                id: 'fitzroy', title: '25 Fitzroy Sq', era: 'Early 20th Century', icon: '🏠', color: '#D90429', coords: [51.5218, -0.1394], addr: 'Fitzrovia', 
+                desc: `25 Fitzroy Square, a townhouse in London’s Bloomsbury district, represents a significant example of how architectural space can be utilized to support alternative forms of domestic life. Originally designed by Robert Adam with a focus on Neo-Classical symmetry and formal social hierarchies, the building was later repurposed by members of the Bloomsbury Group (Reed, 2004). In the early twentieth century, this transition shifted the house from a traditional aristocratic residence into a site of radical queer domesticity. The interior was reorganized to accommodate communal living and artistic collaboration, moving away from the Victorian emphasis on privacy and gendered separation within the home (Rosner, 2005).
+
+The interiority of 25 Fitzroy Square was defined by a rejection of conventional domestic aesthetics in favor of a highly personalized and experimental environment. Rather than following a standard decorative scheme, the residents utilized the house as a canvas for murals and hand-painted furniture, blurring the line between the architectural fabric and the objects within it. This approach to the domestic sphere allowed for a performance of identity that was both creative and subversive (Rosner, 2005). The large, open rooms—originally designed for formal entertaining—were transformed into studios and social hubs where fluid social dynamics could exist. By treating the interior as an evolving artistic project, the occupants were able to construct a home that reflected their shared values and their rejection of heteronormative social standards.
+
+However, the history of the building also reveals the precarious nature of these alternative domestic spaces. In January 1927, the basement flat of 25 Fitzroy Square was the site of a significant police raid (Houlbrook, 2005). The flat, rented by the dancer Bobby Britt, had been under surveillance by authorities who observed the private gatherings held there. Britt, who was a performer in the West End, used the domestic setting as a safe space for working-class gay men to socialize and express themselves through dance and music. Following the raid, Britt was convicted of "keeping a disorderly house"—a charge often used to criminalize queer social hubs—and was sentenced to 15 months of hard labour. This event underscores the vulnerability of the domestic sanctuary when it challenged the moral and legal codes of the time.
+
+Ultimately, 25 Fitzroy Square highlights the role of the domestic environment in the formation of marginalized identities. The house provided a protective space for individuals to live outside the social expectations of the early 1900s, creating a sense of belonging through the manipulation of interior design and social organization. It remains a key example of how urban architecture can be reclaimed to support diverse lived experiences and the ongoing development of a queer domestic history.`, 
+                img: 'https://www.thetimes.com/imageserver/image/%2Fmethode%2Fsundaytimes%2Fprod%2Fweb%2Fbin%2Fb6f23d6c-fb73-11e6-8121-0035d63ed063.jpg?crop=1500%2C1000%2C0%2C0',
+                biblio: ["Houlbrook, M. (2005) Queer London: Perils and Pleasures in the Sexual Metropolis, 1918-1957. Chicago.", "Reed, C. (2004) Bloomsbury Rooms. Yale University Press.", "Rosner, V. (2005) Modernism and the Architecture of Private Life. New York."]
+            },
+            { 
+                id: 'gateways', title: 'The Gateways Club', era: 'Mid-20th Century', icon: '🍸', color: '#D90429', coords: [51.4886, -0.1706], addr: 'Chelsea', 
+                desc: `The Gateways Club, located in a basement on Bramerton Street in Chelsea, represents a significant chapter in the history of queer domesticity and the reclamation of urban space in mid-twentieth-century London. Operating for several decades, it became one of the most enduring lesbian social spaces in the world, providing a vital sanctuary during a period when queer women faced intense social invisibility and legal pressure (Gardiner, 2003). While it functioned as a club, the Gateways was often described by its members as a "home away from home," bridging the gap between a public commercial venue and a private domestic lounge (Houlbrook, 2005). This dual identity allowed it to serve as a critical infrastructure for a community that was frequently excluded from traditional domestic environments.
+
+The architectural threshold of the Gateways was defined by its iconic green door, which served as a clear boundary between the hostile external world and the safe interiority of the club. Descending into the basement, visitors entered a space that intentionally utilized the layout and atmosphere of a private living room (Furman and Mardell, 2022). The interior organization featured low ceilings, intimate seating arrangements, and a central bar that functioned more like a kitchen or a domestic hearth. This spatial arrangement supported a version of domestic life that prioritized female community and shared experience over the patriarchal structures of the time. By utilizing the basement typology—a space typically reserved for storage or utility—the club transformed a neglected part of the urban fabric into a primary site for identity formation and social connection.
+
+Within this environment, the performance of queer domesticity was expressed through regular social rituals, such as the sharing of drinks and conversation in a setting that felt protected from public surveillance. For many women, the club provided the only space where they could explore a fluid sense of persona and express their identities without the need for constant negotiation with heteronormative expectations (Gardiner, 2003). The domestic objects and furniture within the club were not merely functional; they contributed to a sense of belonging and "chosen family" that was often unavailable in their legal residences. This reimagining of the domestic sphere highlights how marginalized groups can inhabit and modify existing architectural forms to create a sense of permanent residence within a temporary social space.`, 
+                img: 'https://i.guim.co.uk/img/media/be0c54a305ec605a8568a073e0b32c36310928a8/0_128_1280_768/master/1280.jpg?width=445&dpr=1&s=none&crop=none',
+                extraImages: ['https://th-thumbnailer.cdn-si-edu.com/z31M5mZEp20reAPpjHPNgU2TUJQ=/1072x720/filters:no_upscale():focal(626x488:627x489)/https://tf-cmsv2-smithsonianmag-media.s3.amazonaws.com/filer_public/6a/0f/6a0f4373-1668-487e-b786-38a9782598c8/gateways_grind_ted_and_women_1950s.jpeg', 'https://i.guim.co.uk/img/media/f6f1e8d622e831d3ef4f7c9ce44e716551ec0155/265_592_8865_5317/master/8865.jpg?width=1200&quality=85&auto=format&fit=max&s=64b20dd33cf0e9c7426aab797ab86d38'],
+                biblio: ["Furman, A. and Mardell, J. (2022) Queer Spaces. London: RIBA Publishing.", "Gardiner, J. (2003) From the Closet to the Screen. London: Pandora.", "Houlbrook, M. (2005) Queer London. Chicago."]
+            },
+            { 
+                id: 'rvt', title: 'Royal Vauxhall Tavern', era: 'Late 20th Century', icon: '🍸', color: '#D90429', coords: [51.4884, -0.1223], addr: 'Vauxhall', 
+                desc: `The Royal Vauxhall Tavern (RVT) represents a significant site for the study of queer domesticity and the reclamation of public architecture in South London. Originally built in the mid-nineteenth century as a traditional Victorian public house, the tavern has been continuously repurposed by the LGBTQ+ community, particularly during the late 1900s (Cook, 2003). Unlike other subterranean or hidden venues, the RVT’s architecture is characterized by its prominent, curved façade and its position as an urban landmark. This visibility creates a unique tension between the public nature of the building and the private, domestic sense of belonging fostered within its interior (Campkin, 2018). During the 1980s and 1990s, this reclamation intensified as the tavern became a critical sanctuary during the AIDS crisis and the era of Section 28. The interiority of the tavern, defined by its central circular bar that doubled as a stage, allowed for a specific performance of identity that turned the public house into a communal "living room" for a marginalized community.
+
+Ultimately, the Royal Vauxhall Tavern demonstrates how a public architectural form can be inhabited and transformed into a site of queer domesticity. The tavern's history of resisting redevelopment and its eventual Grade II listing reflect a broader desire to protect spaces that provide a sense of permanent residence and safety for queer identities in an ever-changing urban landscape (Cook, 2003). It provides a blueprint for how urban space can be reclaimed to support diverse lived experiences, moving beyond the concept of the private home to include communal environments that prioritize self-expression and social connection. The tavern remains a seminal example of how a specific architectural site can function as a protective vessel for the ongoing development of a queer cultural history.`, 
+                img: 'https://d2s8km3brsjp0y.cloudfront.net/eyJidWNrZXQiOiJ3aGF0cHViIiwia2V5IjoiU0VMXC9TRUwrMTA2MjUtNTI5NDAtMzU2NS0yNTg2LmpwZyIsImVkaXRzIjp7InJlc2l6ZSI6eyJ3aWR0aCI6MjAwMCwiaGVpZ2h0IjoxNDUwLCJmaXQiOiJjb3ZlciJ9LCJyb3RhdGUiOm51bGx9fQ==',
+                extraImages: ['https://usercontent.one/wp/www.rvt.community/wp-content/uploads/2015/03/Fig-27.-The-RVT-sign-from-the-80s-showing-dancing-figures.jpg', 'https://usercontent.one/wp/www.rvt.community/wp-content/uploads/2015/03/Fig-28.-The-Sun-reports-on-Princess-Diana-visit-898x1024.jpg', 'https://usercontent.one/wp/www.rvt.community/wp-content/uploads/2015/03/Fig-22a.-Diana-Dors-and-the-Trollettes-at-a-charity-fundraising-event-at-the-RVT.jpg'],
+                biblio: ["Campkin, B. (2018) Queer Infrastructure. London: UCL Press.", "Cook, M. (2003) London and the Culture of Homosexuality, 1885-1914. Cambridge.", "Higgs, D. (1999) Queer Sites. London: Routledge."]
+            },
+            { 
+                id: 'gays_word', title: "Gay's the Word", era: 'Late 20th Century', icon: '🏢', color: '#D90429', coords: [51.5244, -0.1259], addr: 'Bloomsbury', 
+                desc: `Gay's the Word bookshop, established in 1979 in Bloomsbury, represents a significant evolution in the concept of queer domesticity, where the retail environment was transformed into a vital community infrastructure (Graham, 2017). While its primary function was the distribution of literature, the shop’s architecture and social organization allowed it to serve as a communal "living room" and a protective sanctuary for a marginalized population (Houlbrook, 2005). In a period when queer narratives were often suppressed or unavailable in mainstream outlets, the physical space of the bookshop provided a site for the construction of a shared identity and the formation of chosen families. The choice of a storefront with large windows in a visible urban location created a unique tension between public visibility and the private need for a secure social hub.
+
+Ultimately, Gay's the Word demonstrates how a public-facing urban space can be reclaimed to function as a site of queer domesticity. It provides a model for how the domestic landscape can expand beyond the private residence to include communal environments that prioritize self-expression, education, and social connection. The shop remains a key example of how architectural and social spaces can be manipulated to reflect the lived experiences of marginalized groups, creating a sense of permanence and home within the fabric of the city.`, 
+                img: 'https://static.wixstatic.com/media/2b6d5a_f98c477fafb647e8bb0dcd6e18318de4~mv2.jpg/v1/fill/w_640,h_598,al_t,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/2b6d5a_f98c477fafb647e8bb0dcd6e18318de4~mv2.jpg',
+                extraImages: ['https://www.attitude.co.uk/wp-content/uploads/sites/5/2019/01/gtw_feat.jpg', 'https://gaycities-lv.b-cdn.net/listings/originals/shops-100239-gay-s-the-word-davidoperson-cde2a.jpg?width=1470&height=640', 'https://brewminate.com/wp-content/uploads/2023/04/040823-01-History-LGBTQ.jpg'],
+                biblio: ["Graham, N. (2017) Gay's the Word. London: History Press.", "Houlbrook, M. (2005) Queer London. Chicago.", "Furman, A. and Mardell, J. (2022) Queer Spaces. London."]
+            },
+            { 
+                id: 'tonic', title: 'Tonic@Bankhouse', era: '21st Century', icon: '🍲', color: '#D90429', coords: [51.4926, -0.1200], addr: 'Vauxhall', 
+                desc: `Tonic@Bankhouse, located in Vauxhall, represents a contemporary evolution of queer domesticity, moving from the clandestine "backrooms" of the past toward a formal, architecturally integrated model of community living (King, 2021). As the UK’s first LGBTQ+ affirmative retirement community, the project redefines the relationship between the domestic sphere and the aging process for a marginalized population (Furman and Mardell, 2022). Situated within a larger residential development, the space is designed to address the specific lived experiences of older queer individuals, who may face isolation or a lack of sensitivity in traditional care environments. The architecture functions as a permanent sanctuary, prioritizing the formation of "chosen families" within a secure, long-term residential framework.
+
+The interior organization of Tonic@Bankhouse emphasizes a balance between private residence and communal social space. While each resident maintains a private apartment, the building features shared lounges, gardens, and community hubs that function as the "communal hearth" of the development. This spatial arrangement supports a version of domesticity that is both protective and outward-looking (Campkin, 2018). By creating an environment where a fluid sense of persona and shared history are celebrated, the project moves away from the clinical atmosphere of standard senior living. The design utilizes domestic objects and communal areas to facilitate social rituals and collective memory, ensuring that the history of the queer community is embedded in the physical fabric of the home.`, 
+                img: 'https://images.squarespace-cdn.com/content/v1/5a620d960abd04e6cae4477f/1639500226578-X3QR1L13PKQN06NUQ149/Tonic-AH-196.jpg',
+                extraImages: ['https://images.squarespace-cdn.com/content/v1/5a620d960abd04e6cae4477f/1639574968354-FJJJ390M8N4RTRCYT09T/12.png', 'https://images.squarespace-cdn.com/content/v1/60d84f80ba3be6375361757e/1668524667366-3GUOJ03JI1UG5DGG4GO5/5D9A7881.jpg?format=1000w', 'https://images.squarespace-cdn.com/content/v1/60d84f80ba3be6375361757e/1668525722469-BX9YP7RIGRNFKX9PCUY0/MClayton_1804-10-MCOM-BAN_035_D-Hres.jpg?format=500w'],
+                biblio: ["Campkin, B. (2018) Queer Infrastructure. London.", "King, A. (2021) LGBTQ+ Affirmative Housing. London.", "Furman, A. and Mardell, J. (2022) Queer Spaces. London."]
+            }
+        ];
+
+        let mainMap, detailMap, currentLocId = null;
+
+        const cursor = document.getElementById('custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.classList.add('clicking-cursor'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('clicking-cursor'));
+        
+        // Audio Logic - universal click
+        const clickSound = document.getElementById('clickSound');
+        document.addEventListener('click', () => {
+            clickSound.currentTime = 0;
+            clickSound.volume = 0.15;
+            clickSound.play().catch(() => {});
+        });
+
+        document.body.addEventListener('mouseover', (e) => {
+            if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.location-card') || e.target.closest('.leaflet-interactive')) {
+                document.body.classList.add('hovering');
+            } else {
+                document.body.classList.remove('hovering');
+            }
+        });
+
+        function showDetail(id, index) {
+            const loc = locations.find(l => l.id === id);
+            if (!loc) return;
+            currentLocId = id;
+            document.getElementById('archive-view').classList.add('view-hidden');
+            document.getElementById('detail-view').classList.remove('view-hidden');
+            window.scrollTo(0, 0);
+
+            document.getElementById('record-num').textContent = (index + 1).toString().padStart(2, '0');
+            document.getElementById('det-title').textContent = loc.title;
+            document.getElementById('det-addr').textContent = loc.addr;
+            document.getElementById('det-era').textContent = loc.era;
+            document.getElementById('det-desc').textContent = loc.desc;
+
+            const bibContainer = document.getElementById('det-biblio');
+            bibContainer.innerHTML = "";
+            if (loc.biblio) {
+                loc.biblio.forEach(item => {
+                    const p = document.createElement('p');
+                    p.className = "pl-6 border-l border-lipstick-red/40 mb-6 text-gray-500 hover:text-gray-300 transition-colors cursor-default";
+                    p.textContent = item;
+                    bibContainer.appendChild(p);
+                });
+            }
+
+            setTab('narrative');
+
+            const imagesColumn = document.getElementById('det-images-column');
+            imagesColumn.innerHTML = ""; 
+            const allImages = [loc.img, ...(loc.extraImages || [])];
+            allImages.forEach(url => {
+                const panel = document.createElement('div');
+                panel.className = 'archival-frame shadow-2xl transition-all duration-700 hover:scale-[1.02] mb-12 group';
+                panel.innerHTML = `
+                    <img src="${url}" class="w-full h-auto object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000">
+                    <div class="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60 group-hover:opacity-20 transition-opacity"></div>
+                `;
+                imagesColumn.appendChild(panel);
             });
 
-            document.addEventListener('mousedown', () => {
-                cursor.classList.add('clicking-cursor');
-            });
-            document.addEventListener('mouseup', () => {
-                cursor.classList.remove('clicking-cursor');
-            });
-
-            // Hover Efekti
-            document.body.addEventListener('mouseover', (e) => {
-                if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.location-card') || e.target.closest('.leaflet-interactive')) {
-                    document.body.classList.add('hovering');
+            setTimeout(() => {
+                if (!detailMap) {
+                    detailMap = L.map('detail-map', { zoomControl: false, attributionControl: false }).setView(loc.coords, 15);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(detailMap);
                 } else {
-                    document.body.classList.remove('hovering');
+                    detailMap.setView(loc.coords, 15);
                 }
-            });
+                detailMap.eachLayer(l => { if(l instanceof L.Marker) detailMap.removeLayer(l); });
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color:#D90429;" class="w-10 h-10 rounded-full flex items-center justify-center border-2 border-white text-white shadow-2xl scale-125"><span>${loc.icon}</span></div>`,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                });
+                L.marker(loc.coords, { icon }).addTo(detailMap);
+                detailMap.invalidateSize();
+            }, 100);
+        }
 
-            // --- 2. GELİŞMİŞ TIKLAMA SESİ (Audio Pool) ---
-            // Ses dosyası URL'si
-            const soundUrl = 'https://files.catbox.moe/id40qe.mp3';
+        function setTab(tab) {
+            const narTab = document.getElementById('tab-narrative');
+            const bibTab = document.getElementById('tab-biblio');
+            const narPane = document.getElementById('pane-narrative');
+            const bibPane = document.getElementById('pane-biblio');
 
-            // Çoklu ses kanalı oluştur (hızlı tıklamalarda üst üste binebilmesi için)
-            const audioPool = [];
-            const poolSize = 5; // Aynı anda çalabilecek maksimum ses sayısı
-
-            for (let i = 0; i < poolSize; i++) {
-                const a = new Audio(soundUrl);
-                a.volume = 0.4; // Ses seviyesi (%40)
-                audioPool.push(a);
+            if (tab === 'narrative') {
+                narTab.classList.add('tab-active');
+                bibTab.classList.remove('tab-active');
+                bibTab.classList.add('text-gray-600');
+                narPane.classList.remove('view-hidden');
+                bibPane.classList.add('view-hidden');
+            } else {
+                bibTab.classList.add('tab-active');
+                narTab.classList.remove('tab-active');
+                narTab.classList.add('text-gray-600');
+                bibPane.classList.remove('view-hidden');
+                narPane.classList.add('view-hidden');
             }
+        }
 
-            let poolIndex = 0;
+        function showArchive() {
+            document.getElementById('detail-view').classList.add('view-hidden');
+            document.getElementById('archive-view').classList.remove('view-hidden');
+            currentLocId = null;
+            if (mainMap) mainMap.invalidateSize();
+        }
 
-            document.addEventListener('click', () => {
-                const sound = audioPool[poolIndex];
-                sound.currentTime = 0; // Başa sar
-                sound.play().catch(e => console.log("Ses çalınamadı (Tarayıcı engeli olabilir)", e));
-
-                // Bir sonraki kanala geç
-                poolIndex = (poolIndex + 1) % poolSize;
-            });
-
-
-            // --- 3. HARİTA & VERİ ---
-            const ERA_COLORS = { 'era-1700s': '#333', 'era-early-20th': '#555', 'era-mid-century': '#777', 'era-late-20th': '#AAA', 'era-21st-century': '#FFF' };
-            const locations = [
-                { id: 'molly', title: 'Molly-houses', era: '1700s', icon: '⚡️', color: 'era-1700s', coords: [51.5174, -0.1100], addr: 'Holborn', desc: 'Underground taverns for socialization and cross-dressing.', img: 'https://media.londonmuseum.org.uk/images/A-Morning-Frolic-or-the-Transmut.width-1120.format-webp.webp' },
-                { id: 'strawberry', title: 'Strawberry Hill', era: '1700s', icon: '🏠', color: 'era-1700s', coords: [51.4379, -0.3350], addr: 'Twickenham', desc: 'Gothic villa representing queer aestheticism.', img: 'https://daily.jstor.org/wp-content/uploads/2021/01/strawberry_hill_1050x700.jpg' },
-                { id: 'moorfields', title: 'Moorfields', era: '1700s', icon: '🏛️', color: 'era-1700s', coords: [51.5188, -0.0883], addr: 'Finsbury', desc: 'Notorious cruising ground.', img: 'https://i0.wp.com/biancawhitewrites.com/wp-content/uploads/2024/02/img_sodomites_shame_headpiece.png?resize=1024%2C693&ssl=1' },
-                { id: 'fitzroy', title: '25 Fitzroy Sq', era: 'Early 20th', icon: '🏠', color: 'era-early-20th', coords: [51.5218, -0.1394], addr: 'Fitzrovia', desc: 'Bloomsbury Group hub.', img: 'https://www.thetimes.com/imageserver/image/%2Fmethode%2Fsundaytimes%2Fprod%2Fweb%2Fbin%2Fb6f23d6c-fb73-11e6-8121-0035d63ed063.jpg?crop=1500%2C1000%2C0%2C0' },
-                { id: 'gateways', title: 'The Gateways', era: 'Mid-Century', icon: '🍸', color: 'era-mid-century', coords: [51.4886, -0.1706], addr: 'Chelsea', desc: 'Legendary lesbian club behind a green door.', img: 'https://ichef.bbci.co.uk/news/976/cpsprodpb/1399/production/_103658979_gateways.jpg' },
-                { id: 'rvt', title: 'Royal Vauxhall Tavern', era: 'Late 20th', icon: '🍸', color: 'era-late-20th', coords: [51.4884, -0.1223], addr: 'Vauxhall', desc: 'Iconic performance venue and community hub.', img: 'https://static.standard.co.uk/s3fs-public/thumbnails/image/2015/09/08/12/RVT.jpg?width=1200' },
-                { id: 'gays_word', title: "Gay's the Word", era: 'Late 20th', icon: '🏢', color: 'era-late-20th', coords: [51.5244, -0.1259], addr: 'Bloomsbury', desc: 'UK\'s first dedicated LGBTQ+ bookshop.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Gay%27s_The_Word_shop_front.jpg/1200px-Gay%27s_The_Word_shop_front.jpg' },
-                { id: 'tonic', title: 'Tonic@Bankhouse', era: '21st-Century', icon: '🍲', color: 'era-21st-century', coords: [51.4926, -0.1200], addr: 'Vauxhall', desc: 'LGBT+ affirmative retirement community.', img: 'https://images.squarespace-cdn.com/content/v1/5b603c6a36099b6781c03958/1632133582464-5L8L7G8Q4Q4Q4Q4Q4Q4Q/Tonic%40Bankhouse+Exterior.jpg' }
-            ];
-
-            // HARİTA BAŞLATMA
-            let map, markers = {}, highlightedMarker = null, highlightedCard = null;
+        window.onload = () => {
+            mainMap = L.map('map-diagram', { zoomControl: false }).setView([51.505, -0.14], 12);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(mainMap);
             const container = document.getElementById('location-container');
+            locations.forEach((loc, index) => {
+                const card = document.createElement('div');
+                card.className = 'location-card group rounded-none';
+                card.innerHTML = `
+                    <div class="h-64 overflow-hidden relative">
+                        <img src="${loc.img}" class="w-full h-full object-cover grayscale contrast-125 transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent opacity-80 group-hover:opacity-40 transition-opacity"></div>
+                        <div class="absolute top-4 right-4 border border-lipstick-red/20 px-3 py-1 text-[9px] text-white/60 uppercase tracking-widest bg-obsidian/80 backdrop-blur-md">Era: ${loc.era}</div>
+                    </div>
+                    <div class="p-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-3xl opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all">${loc.icon}</span>
+                            <span class="text-[10px] text-lipstick-red font-bold uppercase tracking-widest opacity-80">${loc.addr}</span>
+                        </div>
+                        <h4 class="text-2xl font-serif text-white italic group-hover:text-lipstick-red transition-all mb-3">${loc.title}</h4>
+                        <p class="text-xs text-gray-500 line-clamp-2 font-light leading-relaxed group-hover:text-gray-400 transition-colors">${loc.desc.substring(0, 150)}...</p>
+                    </div>
+                `;
+                card.onclick = () => showDetail(loc.id, index);
+                container.appendChild(card);
 
-            try {
-                map = L.map('map-diagram', { zoomControl: false }).setView([51.505, -0.14], 12);
-                L.control.zoom({ position: 'bottomright' }).addTo(map);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '&copy; CARTO' }).addTo(map);
-
-                locations.forEach(loc => {
-                    // Kart
-                    const card = document.createElement('div');
-                    card.id = `card-${loc.id}`;
-                    card.className = `location-card rounded-sm group`;
-                    card.innerHTML = `<div class="w-full h-52 overflow-hidden relative border-b border-white/10"><img src="${loc.img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x400/111/333?text=Hidden'"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent opacity-80"></div></div><div class="p-6 relative z-10"><div class="flex items-center justify-between mb-3"><span class="text-2xl drop-shadow-lg">${loc.icon}</span><span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 border border-gray-600 px-2 py-1 rounded-full bg-black/50">${loc.era}</span></div><h4 class="text-xl font-serif text-white mb-1 group-hover:text-lipstick-red transition-colors italic">${loc.title}</h4><p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">${loc.addr}</p><p class="text-sm readable-text opacity-80 group-hover:opacity-100 transition-opacity">${loc.desc}</p></div>`;
-                    card.addEventListener('click', () => navigateToDetailPage(loc.id));
-                    container.appendChild(card);
-
-                    // Marker
-                    const icon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:${ERA_COLORS[loc.color]};" class="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white/30 text-white shadow-lg transition-transform hover:scale-125"><span class="text-xs">${loc.icon}</span></div>`, iconSize: [32, 32], iconAnchor: [16, 16] });
-                    const marker = L.marker(loc.coords, { icon: icon }).addTo(map);
-                    marker.bindTooltip(loc.title, { permanent: false, direction: 'top', offset: [0, -20], className: 'bg-black text-white border border-white/20 px-2 py-1 rounded text-xs' });
-                    marker.on('click', () => scrollToLocationCard(loc.id));
-                    markers[loc.id] = marker;
+                const markerIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color:#D90429;" class="w-8 h-8 rounded-full flex items-center justify-center border border-white text-white shadow-xl transition-transform hover:scale-150 duration-300"><span>${loc.icon}</span></div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
                 });
-            } catch (e) { console.error(e); }
-
-            function navigateToDetailPage(id) {
-                const location = locations.find(l => l.id === id);
-                if (!location) return;
-
-                // Derive type from icon or use default
-                const iconToType = {
-                    '⚡️': 'Temporary Social Gathering',
-                    '🏠': 'Private/Domestic Residence',
-                    '🍸': 'Commercial Club',
-                    '🍲': 'Shared & Co-operative Living',
-                    '🏢': 'Commercial Club',
-                    '🏛️': 'Historical Association'
-                };
-                const type = iconToType[location.icon] || 'Temporary Social Gathering';
-
-                // Create URL parameters
-                const params = new URLSearchParams({
-                    id: location.id,
-                    title: encodeURIComponent(location.title),
-                    era: encodeURIComponent(location.era),
-                    type: encodeURIComponent(type),
-                    addr: encodeURIComponent(location.addr),
-                    desc: encodeURIComponent(location.desc),
-                    img: encodeURIComponent(location.img || ''),
-                    coords: location.coords.join(',')
-                });
-
-                // Navigate to detail page
-                window.location.href = `location-detail.html?${params.toString()}`;
-            }
-
-            function scrollToLocationCard(id) {
-                const m = markers[id], c = document.getElementById(`card-${id}`), l = locations.find(x => x.id === id);
-                if (!m || !c) return;
-                if (highlightedMarker) highlightedMarker.classList.remove('marker-highlighted');
-                if (highlightedCard) highlightedCard.classList.remove('card-highlighted');
-                m.getElement().classList.add('marker-highlighted');
-                c.classList.add('card-highlighted');
-                highlightedMarker = m.getElement(); highlightedCard = c;
-                map.flyTo(l.coords, 14, { animate: true, duration: 1.2 });
-                c.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // sound effect
-            const Sound = document.getElementById('Sound');
-
-            // Play sound on any click
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.leaflet-container') &&
-                    !e.target.closest('.leaflet-control-zoom') &&
-                    !e.target.closest('a[href^="http"]')) {
-                    Sound.currentTime = 0;
-                    Sound.volume = 0.3; // Lower volume
-                    Sound.play().catch(e => console.log('Sound play failed:', e));
-                }
+                const marker = L.marker(loc.coords, { icon: markerIcon }).addTo(mainMap);
+                marker.bindTooltip(loc.title, { className: 'leaflet-tooltip-archive', direction: 'top', offset: [0, -10], opacity: 0.9 });
+                marker.on('click', () => { mainMap.flyTo(loc.coords, 14); card.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
             });
-
-            // Also play sound when hovering over interactive elements
-            const interactiveElements = document.querySelectorAll('a, button, .location-card, .leaflet-interactive');
-            interactiveElements.forEach(el => {
-                el.addEventListener('mouseenter', () => {
-                    Sound.currentTime = 0.5; // Start from middle of sound
-                    Sound.volume = 0.2; // Even lower volume for hover
-                    Sound.play().catch(e => { });
-                });
-            });
-        });
+        };
     </script>
-
 </body>
-
 </html>
